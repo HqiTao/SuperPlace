@@ -9,7 +9,7 @@ class VPRNet(nn.Module):
     def __init__(self, backbone):
         super().__init__()
         self.backbone = DINOv2(backbone=backbone)
-        self.aggregation = get_aggregation("netvlad")
+        self.aggregation = get_aggregation("salad")
         
     def forward(self, x):
         x = self.backbone(x)
@@ -18,10 +18,5 @@ class VPRNet(nn.Module):
     
 
 def get_aggregation(args):
-    if args == "gem":
-        return aggregations.GeM(work_with_tokens=args.work_with_tokens)
-    elif args == "salad":
+    if args == "salad":
         return aggregations.SALAD()
-    elif args == "netvlad":
-        return aggregations.NetVLAD(clusters_num=args.netvlad_clusters, dim=args.features_dim,
-                                   work_with_tokens=args.work_with_tokens)
