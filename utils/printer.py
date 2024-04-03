@@ -1,5 +1,3 @@
-
-
 def print_trainable_parameters(model):
     """
     Prints the number of trainable parameters in the model.
