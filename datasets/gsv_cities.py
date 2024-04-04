@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as T
 
-IMAGENET_MEAN_STD = {'mean': [0.485, 0.456, 0.406], 
+IMAGENET_MEAN_STD = {'mean': [0.485, 0.456, 0.406],
                      'std': [0.229, 0.224, 0.225]}
 
 TRAIN_CITIES = ['Bangkok', 'BuenosAires', 'LosAngeles', 'MexicoCity', 'OSL',
@@ -15,6 +15,7 @@ TRAIN_CITIES = ['Bangkok', 'BuenosAires', 'LosAngeles', 'MexicoCity', 'OSL',
                 'TRT', 'Boston', 'Lisbon', 'Medellin', 'Minneapolis',
                 'PRG', 'WashingtonDC', 'Brussels', 'London',
                 'Melbourne', 'Osaka', 'PRS',]
+
 
 class GSVCitiesDataset(Dataset):
     def __init__(self, args, cities=['London', 'Boston'], img_per_place=4, min_img_per_place=4):
@@ -57,17 +58,17 @@ class GSVCitiesDataset(Dataset):
             prefix = i
             tmp_df['place_id'] = tmp_df['place_id'] + (prefix * 10**5)
             tmp_df = tmp_df.sample(frac=1)  # shuffle the city dataframe
-            
+
             df = pd.concat([df, tmp_df], ignore_index=True)
 
         # keep only places depicted by at least min_img_per_place images
         res = df[df.groupby('place_id')['place_id'].transform(
             'size') >= self.min_img_per_place]
         return res.set_index('place_id')
-    
+
     def __getitem__(self, index):
         place_id = self.places_ids[index]
-    
+
         # get the place in form of a dataframe (each row corresponds to one image)
         place = self.dataframe.loc[place_id]
         place = place.sample(n=self.img_per_place)
@@ -100,13 +101,14 @@ class GSVCitiesDataset(Dataset):
         # return the corresponding image name
 
         city = row['city_id']
-        
+
         # now remove the two digit we added to the id
         # they are superficially added to make ids different
         # for different cities
-        pl_id = row.name % 10**5  #row.name is the index of the row, not to be confused with image name
+        # row.name is the index of the row, not to be confused with image name
+        pl_id = row.name % 10**5
         pl_id = str(pl_id).zfill(7)
-        
+
         panoid = row['panoid']
         year = str(row['year']).zfill(4)
         month = str(row['month']).zfill(2)
