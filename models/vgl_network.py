@@ -4,7 +4,7 @@ from models.dinov2_network import DINOv2
 import models.aggregations as aggregations
 
 
-class VPRNet(nn.Module):
+class VGLNet(nn.Module):
 
     def __init__(self, backbone):
         super().__init__()

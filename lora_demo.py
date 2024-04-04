@@ -1,6 +1,6 @@
 import models.loralib as lora
 
-from models.vpr_network import VPRNet
+from models.vgl_network import VPRNet
 from utils.printer import print_trainable_parameters   
 
 

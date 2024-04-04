@@ -1,9 +1,8 @@
 import torch
 from torch import nn
-
+import models.loralib as lora
 from models.vision_transformer import vit_small, vit_base, vit_large, vit_giant2
 
-import models.loralib as lora
 
 BACKBONE = {
     "dinov2_vits14": vit_small,

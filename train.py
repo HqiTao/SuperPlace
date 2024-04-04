@@ -9,11 +9,10 @@ from datetime import datetime
 import torch
 import torch.nn as nn
 from torch.utils.data.dataloader import DataLoader
-from pytorch_metric_learning import losses, miners
-from pytorch_metric_learning.distances import CosineSimilarity
+from pytorch_metric_learning import losses, miners, distances
 
 from utils import parser, commons
-from models import vpr_network
+from models.vgl_network import VGLNet
 
 
 torch.backends.cudnn.benchmark = True  # Provides a speedup
@@ -31,7 +30,7 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 logging.debug(f"Loading dataset {args.dataset_name} from folder {args.datasets_folder}")
 
 #### Initialize model
-model = vpr_network.VPRNet(args)
+model = VGLNet(args)
 model = model.to(args.device)
 
 model = torch.nn.DataParallel(model)
@@ -39,8 +38,8 @@ model = torch.nn.DataParallel(model)
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=len(ds)*3, gamma=0.5, last_epoch=-1)
-criterion = losses.MultiSimilarityLoss(alpha=1.0, beta=50, base=0.0, distance=CosineSimilarity())
-miner = miners.MultiSimilarityMiner(epsilon=0.1, distance=CosineSimilarity())
+criterion = losses.MultiSimilarityLoss(alpha=1.0, beta=50, base=0.0, distance=distances.CosineSimilarity())
+miner = miners.MultiSimilarityMiner(epsilon=0.1, distance=distances.CosineSimilarity())
 
 #### Resume model, optimizer, and other training parameters
 if args.resume:
