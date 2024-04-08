@@ -1,5 +1,3 @@
-
-
 import os
 import logging
 import numpy as np
@@ -32,13 +30,12 @@ logging.debug(f"Loading dataset {args.dataset_name} from folder {args.datasets_f
 train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
 train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory_device = True)
 
-val_ds = base_dataset.BaseDataset(args)
+val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
 
 #### Initialize model
 model = vgl_network.VGLNet(args)
 model = model.to(args.device)
-
 model = torch.nn.DataParallel(model)
 
 #### Setup Optimizer and Loss
@@ -46,6 +43,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=len(train_ds)*3, gamma=0.5, last_epoch=-1)
 criterion = losses.MultiSimilarityLoss(alpha=1.0, beta=50, base=0.0, distance=distances.CosineSimilarity())
 miner = miners.MultiSimilarityMiner(epsilon=0.1, distance=distances.CosineSimilarity())
+scaler = torch.cuda.amp.GradScaler()
 
 #### Resume model, optimizer, and other training parameters
 if args.resume:
@@ -53,9 +51,6 @@ if args.resume:
     logging.info(f"Resuming from epoch {start_epoch_num} with best recall@5 {best_r5:.1f}")
 else:
     best_r5 = start_epoch_num = not_improved_num = 0
-
-if args.use_amp16:
-    scaler = torch.cuda.amp.GradScaler()
 
 #### Training loop
 for epoch_num in range(start_epoch_num, args.epochs_num):

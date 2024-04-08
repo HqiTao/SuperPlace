@@ -13,11 +13,11 @@ IMAGENET_MEAN_STD = {'mean': [0.485, 0.456, 0.406],
 class BaseDataset(data.Dataset):
     """Dataset with images from database and queries, used for inference (testing and building cache).
     """
-    def __init__(self, args, datasets_folder="datasets", dataset_name="pitts30k", split="train"):
+    def __init__(self, args, split="train"):
         super().__init__()
         self.args = args
-        self.dataset_name = dataset_name
-        self.dataset_folder = os.pathjoin(datasets_folder, dataset_name, "images", split)
+        self.dataset_name = self.args.dataset_name
+        self.dataset_folder = os.pathjoin(self.args.datasets_folder, self.dataset_name, "images", split)
         
         self.resize = args.resize
         

@@ -29,13 +29,11 @@ class DINOv2(nn.Module):
         self.return_token = return_token
 
         pretrained_model_path = f"/home/ubuntu/.cache/torch/hub/checkpoints/{backbone}_pretrain.pth"
+        model_state_dict = torch.load(pretrained_model_path)
+        self.model.load_state_dict(model_state_dict, strict = False)
 
-        if pretrained_model_path:
-            model_state_dict = torch.load(pretrained_model_path)
-            self.model.load_state_dict(model_state_dict, strict = False)
-
-        # for param in self.model.parameters():
-        #     param.requires_grad = False
+        for param in self.model.parameters():
+            param.requires_grad = False
 
         num_blocks = len(self.model.blocks)
         for i, block in enumerate(self.model.blocks):

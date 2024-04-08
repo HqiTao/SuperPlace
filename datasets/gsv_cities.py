@@ -20,7 +20,7 @@ TRAIN_CITIES = ['Bangkok', 'BuenosAires', 'LosAngeles', 'MexicoCity', 'OSL',
 class GSVCitiesDataset(Dataset):
     def __init__(self, args, cities=['London', 'Boston'], img_per_place=4, min_img_per_place=4):
         super(GSVCitiesDataset, self).__init__()
-        self.base_path = os.path.join(args.datasets_folder, args.dataset_name)
+        self.base_path = os.path.join(args.datasets_folder, "gsv_cities/")
         self.cities = cities
 
         assert img_per_place <= min_img_per_place, f"img_per_place should be less than {min_img_per_place}"

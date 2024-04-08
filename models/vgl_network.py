@@ -6,10 +6,12 @@ import models.aggregations as aggregations
 
 class VGLNet(nn.Module):
 
-    def __init__(self, backbone):
+    def __init__(self, args):
         super().__init__()
-        self.backbone = DINOv2(backbone=backbone)
-        self.aggregation = get_aggregation("salad")
+        self.backbone = DINOv2(backbone=args.backbone,
+                               num_trainable_blocks=args.num_trainable_blocks)
+        
+        self.aggregation = get_aggregation(args.aggregation)
         
     def forward(self, x):
         x = self.backbone(x)
@@ -17,6 +19,6 @@ class VGLNet(nn.Module):
         return x
     
 
-def get_aggregation(args):
-    if args == "salad":
+def get_aggregation(aggregation_name):
+    if aggregation_name == "salad":
         return aggregations.SALAD()
