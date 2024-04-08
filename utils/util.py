@@ -10,11 +10,11 @@ def save_checkpoint(args, state, is_best, filename):
     model_path = os.path.join(args.save_dir, filename)
     torch.save(state, model_path)
     if is_best:
-        shutil.copyfile(model_path, os.join(args.save_dir, "best_model.pth"))
+        shutil.copyfile(model_path, os.path.join(args.save_dir, "best_model.pth"))
 
 
 def resume_model(args, model):
-    checkpoint = torch.load(args.resume, map_location=args.device)
+    checkpoint = torch.load(args.resume, map_location="cuda")
     if 'model_state_dict' in checkpoint:
         state_dict = checkpoint['model_state_dict']
     else:
@@ -37,10 +37,10 @@ def resume_train(args, model, optimizer=None, strict=False):
     model.load_state_dict(checkpoint["model_state_dict"], strict=strict)
     if optimizer:
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-    best_r5 = checkpoint["best_r5"]
+    best_r1 = checkpoint["best_r1"]
     not_improved_num = checkpoint["not_improved_num"]
     logging.debug(f"Loaded checkpoint: start_epoch_num = {start_epoch_num}, "
-                  f"current_best_R@5 = {best_r5:.1f}")
+                  f"current_best_R@1 = {best_r1:.1f}")
     if args.resume.endswith("last_model.pth"):  # Copy best model to current save_dir
         shutil.copy(args.resume.replace("last_model.pth", "best_model.pth"), args.save_dir)
-    return model, optimizer, best_r5, start_epoch_num, not_improved_num
+    return model, optimizer, best_r1, start_epoch_num, not_improved_num

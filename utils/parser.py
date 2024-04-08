@@ -4,23 +4,25 @@ import argparse
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Cross-domain Switch-aware Re-parameterization Visual Place Recognition",
+    parser = argparse.ArgumentParser(description="Cross-domain Switch-aware Re-parameterization Visual Geo-Loclization",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # Training parameters
-    parser.add_argument("--train_batch_size", type=int, default=32,
+    parser.add_argument("--train_batch_size", type=int, default=64,
                         help="Batch size for training.")
-    parser.add_argument("--infer_batch_size", type=int, default=16,
+    parser.add_argument("--infer_batch_size", type=int, default=32,
                         help="Batch size for inference.")
-    parser.add_argument("--num_epochs", type=int, default=10,
+    parser.add_argument("--epochs_num", type=int, default=10,
                         help="number of epochs to train")
     parser.add_argument("--patience", type=int, default=3)
-    parser.add_argument("--lr", type=float, default=0.0001, help="_")
+    parser.add_argument("--lr", type=float, default=0.00005, help="_")
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
                         choices=["dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
     parser.add_argument("--aggregation", type=str, default="salad", choices=["salad"])
     parser.add_argument("--num_trainable_blocks", type=int, default=4,
                         help="num_trainable_blocks")
+    parser.add_argument("--features_dim", type=int, default=8448,
+                        help="features_dim")
     # Initialization parameters
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--resume", type=str, default=None,
@@ -31,24 +33,12 @@ def parse_arguments():
     parser.add_argument("--val_positive_dist_threshold", type=int, default=25, help="_")
     parser.add_argument("--train_positives_dist_threshold", type=int, default=10, help="_")
     parser.add_argument('--recall_values', type=int, default=[1, 5, 10, 100], nargs="+",
-                        help="Recalls to be computed, such as R@5.")
+                        help="Recalls to be computed, such as R@1.")
     # Paths parameters
     parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/Projects/npr/datasets", help="Path with all datasets")
     parser.add_argument("--dataset_name", type=str, default="pitts30k", help="Relative path of the dataset")
-    parser.add_argument("--save_dir", type=str, default="default",
+    parser.add_argument("--save_dir", type=str, default="",
                         help="Folder name of the current run (saved in ./logs/)")
     args = parser.parse_args()
-    
-    if args.datasets_folder is None:
-        try:
-            args.datasets_folder = os.environ['DATASETS_FOLDER']
-        except KeyError:
-            raise Exception("You should set the parameter --datasets_folder or export " +
-                            "the DATASETS_FOLDER environment variable as such \n" +
-                            "export DATASETS_FOLDER=../datasets_vg/datasets")
-    
-    
-    if args.pca_dim is not None and args.pca_dataset_folder is None:
-        raise ValueError("Please specify --pca_dataset_folder when using pca")
 
     return args

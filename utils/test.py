@@ -1,7 +1,7 @@
 import faiss
-import tqdm
 import logging
 import numpy as np
+from tqdm import tqdm
 
 import torch
 from torch.utils.data import DataLoader
@@ -19,11 +19,11 @@ def test(args, eval_ds, model):
         # For database use "hard_resize", although it usually has no effect because database images have same resolution
         database_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num)))
         database_dataloader = DataLoader(dataset=database_subset_ds, num_workers=args.num_workers,
-                                         batch_size=args.infer_batch_size, pin_memory=(args.device == "cuda"))
+                                         batch_size=args.infer_batch_size, pin_memory=True)
         all_features = np.empty((len(eval_ds), args.features_dim), dtype="float32")
 
         for inputs, indices in tqdm(database_dataloader, ncols=100):
-            features = model(inputs.to(args.device))
+            features = model(inputs.to("cuda"))
             features = features.cpu().numpy()
             # if pca is not None:
             #     features = pca.transform(features)
@@ -33,9 +33,9 @@ def test(args, eval_ds, model):
         queries_infer_batch_size = args.infer_batch_size
         queries_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num, eval_ds.database_num+eval_ds.queries_num)))
         queries_dataloader = DataLoader(dataset=queries_subset_ds, num_workers=args.num_workers,
-                                        batch_size=queries_infer_batch_size, pin_memory=(args.device == "cuda"))
+                                        batch_size=queries_infer_batch_size, pin_memory=True)
         for inputs, indices in tqdm(queries_dataloader, ncols=100):
-            features = model(inputs.to(args.device))
+            features = model(inputs.to("cuda"))
             features = features.cpu().numpy()
             # if pca is not None:
             #     features = pca.transform(features)

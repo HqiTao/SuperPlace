@@ -23,7 +23,7 @@ class BaseDataset(data.Dataset):
         
         #### Read paths and UTM coordinates for all images.
         database_folder = os.path.join(self.dataset_folder, "database")
-        queries_folder = os.join(self.dataset_folder, "queries")
+        queries_folder = os.path.join(self.dataset_folder, "queries")
 
         self.database_paths = sorted(glob(os.path.join(database_folder, "**", "*.jpg"), recursive=True))
         self.queries_paths = sorted(glob(os.path.join(queries_folder, "**", "*.jpg"),  recursive=True))

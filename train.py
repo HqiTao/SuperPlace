@@ -8,7 +8,7 @@ import torch
 from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
 
-from utils import util, parser, commons, test
+from utils import util, parser, commons, test, printer, domain_awareness
 from models import vgl_network
 from datasets import gsv_cities, base_dataset
 
@@ -17,7 +17,7 @@ torch.backends.cudnn.benchmark = True  # Provides a speedup
 #### Initial setup: parser, logging...
 args = parser.parse_arguments()
 start_time = datetime.now()
-args.save_dir = os.path.join("logs", args.save_dir, args.backbone, args.dataset_name)
+args.save_dir = os.path.join("logs", args.save_dir, args.backbone, "domain")
 commons.setup_logging(args.save_dir)
 commons.make_deterministic(args.seed)
 logging.info(f"Arguments: {args}")
@@ -25,17 +25,22 @@ logging.info(f"The outputs are being saved in {args.save_dir}")
 logging.info(f"Using {torch.cuda.device_count()} GPUs")
 
 #### Creation of Datasets
-logging.debug(f"Loading dataset {args.dataset_name} from folder {args.datasets_folder}")
+logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
-train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
-train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory_device = True)
+# train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
+train_ds = gsv_cities.GSVCitiesDataset(args)
+train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
 val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
 
+test_ds = base_dataset.BaseDataset(args, "test")
+logging.info(f"Test set: {test_ds}")
+
 #### Initialize model
 model = vgl_network.VGLNet(args)
-model = model.to(args.device)
+model = model.to("cuda")
+printer.print_trainable_parameters(model)
 model = torch.nn.DataParallel(model)
 
 #### Setup Optimizer and Loss
@@ -47,10 +52,12 @@ scaler = torch.cuda.amp.GradScaler()
 
 #### Resume model, optimizer, and other training parameters
 if args.resume:
-    model, _, best_r5, start_epoch_num, not_improved_num = util.resume_train(args, model, strict=False)
-    logging.info(f"Resuming from epoch {start_epoch_num} with best recall@5 {best_r5:.1f}")
+    model, _, best_r1, start_epoch_num, not_improved_num = util.resume_train(args, model, strict=False)
+    logging.info(f"Resuming from epoch {start_epoch_num} with best recall@1 {best_r1:.1f}")
 else:
-    best_r5 = start_epoch_num = not_improved_num = 0
+    best_r1 = start_epoch_num = not_improved_num = 0
+
+domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
 
 #### Training loop
 for epoch_num in range(start_epoch_num, args.epochs_num):
@@ -60,7 +67,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     epoch_losses=[]
 
     model.train()
-    for places, labels in tqdm(train_ds, ncols=100):
+    for places, labels in tqdm(train_dl, ncols=100):
 
         BS, N, ch, h, w = places.shape
         images = places.view(BS*N, ch, h, w)
@@ -91,25 +98,30 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     recalls, recalls_str = test.test(args, val_ds, model)
     logging.info(f"Recalls on val set {val_ds}: {recalls_str}")
     
-    is_best = recalls[1] > best_r5
+    is_best = recalls[0] > best_r1
     
     # Save checkpoint, which contains all training parameters
     util.save_checkpoint(args, {"epoch_num": epoch_num, "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(), "recalls": recalls, "best_r5": best_r5,
+        "optimizer_state_dict": optimizer.state_dict(), "recalls": recalls, "best_r1": best_r1,
         "not_improved_num": not_improved_num
     }, is_best, filename="last_model.pth")
     
     
     if is_best:
-        logging.info(f"Improved: previous best R@5 = {best_r5:.1f}, current R@5 = {(recalls[1]):.1f}")
-        best_r5 = (recalls[1])
+        logging.info(f"Improved: previous best R@1 = {best_r1:.1f}, current R@1 = {(recalls[0]):.1f}")
+        best_r1 = (recalls[0])
         not_improved_num = 0
     else:
         not_improved_num += 1
-        logging.info(f"Not improved: {not_improved_num} / {args.patience}: best R@5 = {best_r5:.1f}, current R@5 = {(recalls[1]):.1f}")
+        logging.info(f"Not improved: {not_improved_num} / {args.patience}: best R@1 = {best_r1:.1f}, current R@1 = {(recalls[0]):.1f}")
         if not_improved_num >= args.patience:
             logging.info(f"Performance did not improve for {not_improved_num} epochs. Stop training.")
             break
 
-logging.info(f"Best R@5: {best_r5:.1f}")
+logging.info(f"Best R@1: {best_r1:.1f}")
 logging.info(f"Trained for {epoch_num+1:02d} epochs, in total in {str(datetime.now() - start_time)[:-7]}")
+
+recalls, recalls_str = test.test(args, test_ds, model)
+logging.info(f"Recalls on {test_ds}: {recalls_str}")
+
+logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
