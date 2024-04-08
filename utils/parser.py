@@ -29,9 +29,6 @@ def parse_arguments():
     # Other parameters
     parser.add_argument("--num_workers", type=int, default=8, help="num_workers for all dataloaders")
     parser.add_argument('--resize', type=int, default=[224, 224], nargs=2, help="Resizing shape for images (HxW).")
-    parser.add_argument('--test_method', type=str, default="hard_resize",
-                        choices=["hard_resize", "single_query", "central_crop", "five_crops", "nearest_crop"],
-                        help="This includes pre/post-processing methods and prediction refinement")
     parser.add_argument("--efficient_ram_testing", action='store_true', help="_")
     parser.add_argument("--val_positive_dist_threshold", type=int, default=25, help="_")
     parser.add_argument("--train_positives_dist_threshold", type=int, default=10, help="_")

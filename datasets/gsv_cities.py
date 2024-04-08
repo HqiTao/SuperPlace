@@ -5,7 +5,7 @@ import pandas as pd
 from PIL import Image
 import torch
 from torch.utils.data import Dataset
-import torchvision.transforms as T
+import torchvision.transforms as transforms
 
 IMAGENET_MEAN_STD = {'mean': [0.485, 0.456, 0.406],
                      'std': [0.229, 0.224, 0.225]}
@@ -26,10 +26,10 @@ class GSVCitiesDataset(Dataset):
         assert img_per_place <= min_img_per_place, f"img_per_place should be less than {min_img_per_place}"
         self.img_per_place = img_per_place
         self.min_img_per_place = min_img_per_place
-        self.transform = T.Compose([T.Resize(args.resize, interpolation=T.InterpolationMode.BILINEAR),
-                                    T.RandAugment(num_ops=3, interpolation=T.InterpolationMode.BILINEAR),
-                                    T.ToTensor(),
-                                    T.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
+        self.transform = transforms.Compose([transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
+                                    transforms.RandAugment(num_ops=3, interpolation=transforms.InterpolationMode.BILINEAR),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
 
         # generate the dataframe contraining images metadata
         self.dataframe = self.__getdataframes()
@@ -79,8 +79,7 @@ class GSVCitiesDataset(Dataset):
                 row['city_id'] + '/' + img_name
             img = self.image_loader(img_path)
 
-            if self.transform is not None:
-                img = self.transform(img)
+            img = self.transform(img)
 
             imgs.append(img)
 
