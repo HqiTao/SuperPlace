@@ -14,7 +14,7 @@ def print_trainable_parameters(model):
 
 
 def print_trainable_layers(model):
-    for name, param in model.model.named_parameters():
-        if param.requires_grad:
-            print(name, param.shape)
+    for name, param in model.named_parameters():
+        if param.requires_grad and "bias" not in name and "aggregation" not in name:
+            logging.info(".".join(name.split(".")[2:-1]))
 

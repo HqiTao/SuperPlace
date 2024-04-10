@@ -1,4 +1,4 @@
-import os
+import sys, os
 import logging
 import numpy as np
 from tqdm import tqdm
@@ -7,6 +7,7 @@ from datetime import datetime
 import torch
 from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
+from peft import LoraConfig
 
 from utils import util, parser, commons, test, printer, domain_awareness
 from models import vgl_network
@@ -17,7 +18,7 @@ torch.backends.cudnn.benchmark = True  # Provides a speedup
 #### Initial setup: parser, logging...
 args = parser.parse_arguments()
 start_time = datetime.now()
-args.save_dir = os.path.join("logs", args.save_dir, args.backbone, "domain")
+args.save_dir = os.path.join("logs", args.save_dir, args.backbone, "gsv_cities")
 commons.setup_logging(args.save_dir)
 commons.make_deterministic(args.seed)
 logging.info(f"Arguments: {args}")
@@ -27,8 +28,11 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 #### Creation of Datasets
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
-# train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
-train_ds = gsv_cities.GSVCitiesDataset(args)
+if args.use_aware:
+    train_ds = gsv_cities.GSVCitiesDataset(args)
+else:
+    train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
+
 train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
 val_ds = base_dataset.BaseDataset(args, "val")
@@ -41,6 +45,7 @@ logging.info(f"Test set: {test_ds}")
 model = vgl_network.VGLNet(args)
 model = model.to("cuda")
 printer.print_trainable_parameters(model)
+printer.print_trainable_layers(model)
 model = torch.nn.DataParallel(model)
 
 #### Setup Optimizer and Loss
@@ -57,7 +62,9 @@ if args.resume:
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
-domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
+if args.use_aware:
+    domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
+    sys.exit()
 
 #### Training loop
 for epoch_num in range(start_epoch_num, args.epochs_num):

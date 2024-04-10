@@ -44,3 +44,33 @@ def resume_train(args, model, optimizer=None, strict=False):
     if args.resume.endswith("last_model.pth"):  # Copy best model to current save_dir
         shutil.copy(args.resume.replace("last_model.pth", "best_model.pth"), args.save_dir)
     return model, optimizer, best_r1, start_epoch_num, not_improved_num
+
+def split_and_assign_qkv_parameters(model, pretrained_dict):
+
+    for block_name, block in model.named_children():
+        if 'blocks' in block_name:
+            for layer_name, layer in block.named_children():
+                for sublayer_name, sublayer in layer.named_children():
+                    if 'attn' in sublayer_name:
+                        qkv_weight_key = f'{block_name}.{layer_name}.attn.qkv.weight'
+                        qkv_bias_key = f'{block_name}.{layer_name}.attn.qkv.bias'
+                    
+                        qkv_weight = pretrained_dict[qkv_weight_key]
+                        qkv_bias = pretrained_dict.get(qkv_bias_key, None)
+                        
+                        dim = qkv_weight.size(0) // 3
+                        
+                        q_weight, k_weight, v_weight = qkv_weight.split(dim, dim=0)
+                        if qkv_bias is not None:
+                            q_bias, k_bias, v_bias = qkv_bias.split(dim)
+                        else:
+                            q_bias = k_bias = v_bias = None
+
+                        sublayer.q.weight.data = q_weight
+                        sublayer.k.weight.data = k_weight
+                        sublayer.v.weight.data = v_weight
+                        
+                        if q_bias is not None:
+                            sublayer.q.bias.data = q_bias
+                            sublayer.k.bias.data = k_bias
+                            sublayer.v.bias.data = v_bias

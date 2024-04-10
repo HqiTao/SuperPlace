@@ -17,7 +17,7 @@ class BaseDataset(data.Dataset):
         super().__init__()
         self.args = args
         self.dataset_name = self.args.dataset_name
-        self.dataset_folder = os.pathjoin(self.args.datasets_folder, self.dataset_name, "images", split)
+        self.dataset_folder = os.path.join(self.args.datasets_folder, self.dataset_name, "images", split)
         
         self.resize = args.resize
         

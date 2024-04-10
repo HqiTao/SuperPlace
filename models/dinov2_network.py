@@ -1,8 +1,8 @@
 import torch
 from torch import nn
-import models.loralib as lora
 from models.vision_transformer import vit_small, vit_base, vit_large, vit_giant2
 
+from utils import util
 
 BACKBONE = {
     "dinov2_vits14": vit_small,
@@ -31,6 +31,7 @@ class DINOv2(nn.Module):
         pretrained_model_path = f"/home/ubuntu/.cache/torch/hub/checkpoints/{backbone}_pretrain.pth"
         model_state_dict = torch.load(pretrained_model_path)
         self.model.load_state_dict(model_state_dict, strict = False)
+        util.split_and_assign_qkv_parameters(model = self.model, pretrained_dict = model_state_dict)
 
         for param in self.model.parameters():
             param.requires_grad = False
@@ -40,8 +41,6 @@ class DINOv2(nn.Module):
             if i >= num_blocks - self.num_trainable_blocks:
                 for param in block.parameters():
                     param.requires_grad = True
-
-        # lora.utils.mark_only_lora_as_trainable(self.model)
 
 
     def forward(self, x):

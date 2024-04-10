@@ -14,8 +14,6 @@ import warnings
 from torch import Tensor
 from torch import nn
 
-import models.loralib as lora
-
 logger = logging.getLogger("dinov2")
 
 
@@ -50,17 +48,23 @@ class Attention(nn.Module):
         self.scale = head_dim**-0.5
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
-        # self.qkv = lora.MergedLinear(dim, dim * 3, r = 32, lora_alpha = 16, enable_lora = [True, False, True])
+        self.q = nn.Linear(dim, dim, bias=qkv_bias)
+        self.k = nn.Linear(dim, dim, bias=qkv_bias)
+        self.v = nn.Linear(dim, dim, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim, bias=proj_bias)
-        # self.proj = lora.Linear(dim, dim, r = 32, lora_alpha = 16)
         self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x: Tensor) -> Tensor:
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        # qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        # q, k, v = qkv[0] * self.scale, qkv[1], qkv[2]
 
-        q, k, v = qkv[0] * self.scale, qkv[1], qkv[2]
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        k = self.k(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        q = q * self.scale
+
         attn = q @ k.transpose(-2, -1)
 
         attn = attn.softmax(dim=-1)
@@ -74,15 +78,18 @@ class Attention(nn.Module):
 
 class MemEffAttention(Attention):
     def forward(self, x: Tensor, attn_bias=None) -> Tensor:
-        if not XFORMERS_AVAILABLE:
+        if XFORMERS_AVAILABLE:
             if attn_bias is not None:
                 raise AssertionError("xFormers is required for using nested tensors")
             return super().forward(x)
 
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads)
+        # qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads)
+        # q, k, v = unbind(qkv, 2)
 
-        q, k, v = unbind(qkv, 2)
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads)
+        k = self.k(x).reshape(B, N, self.num_heads, C // self.num_heads)
+        v = self.v(x).reshape(B, N, self.num_heads, C // self.num_heads)
 
         x = memory_efficient_attention(q, k, v, attn_bias=attn_bias)
         x = x.reshape([B, N, C])

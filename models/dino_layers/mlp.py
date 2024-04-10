@@ -12,8 +12,6 @@ from typing import Callable, Optional
 
 from torch import Tensor, nn
 
-import models.loralib as lora
-
 
 class Mlp(nn.Module):
     def __init__(
@@ -29,10 +27,8 @@ class Mlp(nn.Module):
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
         self.fc1 = nn.Linear(in_features, hidden_features, bias=bias)
-        # self.fc1 = lora.Linear(in_features, hidden_features, r = 32, lora_alpha = 16)
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features, bias=bias)
-        # self.fc2 = lora.Linear(hidden_features, out_features, r = 32, lora_alpha = 16)
         self.drop = nn.Dropout(drop)
 
     def forward(self, x: Tensor) -> Tensor:
