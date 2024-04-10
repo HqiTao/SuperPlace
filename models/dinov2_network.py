@@ -20,11 +20,10 @@ CHANNELS_NUM = {
 
 class DINOv2(nn.Module):
 
-    def __init__(self, backbone : str, num_trainable_blocks = 4, norm_layer = True, return_token = True):
+    def __init__(self, backbone : str, trainable_layers="8, 9, 10, 11", norm_layer = True, return_token = True):
         super().__init__()
         self.model = BACKBONE[backbone](patch_size = 14, img_size = 518, init_values = 1, block_chunks = 0)
         self.channels_num = CHANNELS_NUM[backbone]
-        self.num_trainable_blocks = num_trainable_blocks
         self.norm_layer = norm_layer
         self.return_token = return_token
 
@@ -33,12 +32,16 @@ class DINOv2(nn.Module):
         self.model.load_state_dict(model_state_dict, strict = False)
         util.split_and_assign_qkv_parameters(model = self.model, pretrained_dict = model_state_dict)
 
+        if trainable_layers == "all":
+            self.trainable_layers = list(range(12))
+        else:
+            self.trainable_layers = [int(x.strip()) for x in trainable_layers.split(',')]
+
         for param in self.model.parameters():
             param.requires_grad = False
 
-        num_blocks = len(self.model.blocks)
         for i, block in enumerate(self.model.blocks):
-            if i >= num_blocks - self.num_trainable_blocks:
+            if i in self.trainable_layers:
                 for param in block.parameters():
                     param.requires_grad = True
 

@@ -7,21 +7,23 @@ def parse_arguments():
     # Awareness parameters
     parser.add_argument("--use_awareness", action="store_true",
                         help="domain awareness")
+    parser.add_argument("--use_lora", action="store_true",
+                        help="low rank adaption")
     # Training parameters
     parser.add_argument("--train_batch_size", type=int, default=32,
                         help="Batch size for training.")
     parser.add_argument("--infer_batch_size", type=int, default=32,
                         help="Batch size for inference.")
-    parser.add_argument("--epochs_num", type=int, default=10,
+    parser.add_argument("--epochs_num", type=int, default=4,
                         help="number of epochs to train")
     parser.add_argument("--patience", type=int, default=3)
-    parser.add_argument("--lr", type=float, default=0.00005, help="_")
+    parser.add_argument("--lr", type=float, default=0.0005, help="_")
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
                         choices=["dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
     parser.add_argument("--aggregation", type=str, default="salad", choices=["salad"])
-    parser.add_argument("--num_trainable_blocks", type=int, default=12,
-                        help="num_trainable_blocks")
+    parser.add_argument("--trainable_layers", type=str, default="8, 9, 10, 11",
+                    help="Comma-separated list of layer indexes to be trained")
     parser.add_argument("--features_dim", type=int, default=8448,
                         help="features_dim")
     # Initialization parameters

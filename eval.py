@@ -17,8 +17,9 @@ logging.info(f"The outputs are being saved in {args.save_dir}")
 
 model = vgl_network.VGLNet(args)
 model = model.to("cuda")
-logging.info(f"Resuming model from {args.resume}")
-model = util.resume_model(args, model)
+if args.resume != None:
+    logging.info(f"Resuming model from {args.resume}")
+    model = util.resume_model(args, model)
 model = torch.nn.DataParallel(model)
 
 test_ds = base_dataset.BaseDataset(args, "test")

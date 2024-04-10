@@ -9,7 +9,7 @@ class VGLNet(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.backbone = DINOv2(backbone=args.backbone,
-                               num_trainable_blocks=args.num_trainable_blocks)
+                               trainable_layers=args.trainable_layers)
         
         self.aggregation = get_aggregation(args.aggregation)
         

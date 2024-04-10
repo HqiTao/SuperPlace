@@ -7,7 +7,7 @@ from datetime import datetime
 import torch
 from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
-from peft import LoraConfig
+from peft import LoraConfig, get_peft_config
 
 from utils import util, parser, commons, test, printer, domain_awareness
 from models import vgl_network
@@ -28,7 +28,7 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 #### Creation of Datasets
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
-if args.use_aware:
+if args.use_awareness:
     train_ds = gsv_cities.GSVCitiesDataset(args)
 else:
     train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
@@ -41,16 +41,22 @@ logging.info(f"Val set: {val_ds}")
 test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
+if args.use_lora:
+    lora_config = LoraConfig(r=8, lora_alpha=32, target_modules=["v", "proj"], lora_dropout=0.01)
+
 #### Initialize model
 model = vgl_network.VGLNet(args)
 model = model.to("cuda")
+if args.use_lora:
+    model = get_peft_config(model, lora_config)
 printer.print_trainable_parameters(model)
 printer.print_trainable_layers(model)
 model = torch.nn.DataParallel(model)
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=len(train_ds)*3, gamma=0.5, last_epoch=-1)
+# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_dl), eta_min=0.1*args.lr)
+scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.2, total_iters=4000)
 criterion = losses.MultiSimilarityLoss(alpha=1.0, beta=50, base=0.0, distance=distances.CosineSimilarity())
 miner = miners.MultiSimilarityMiner(epsilon=0.1, distance=distances.CosineSimilarity())
 scaler = torch.cuda.amp.GradScaler()
@@ -62,7 +68,7 @@ if args.resume:
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
-if args.use_aware:
+if args.use_awareness:
     domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
     sys.exit()
 

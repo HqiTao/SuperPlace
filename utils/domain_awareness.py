@@ -5,7 +5,6 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import torch
 
-from models import dinov2_network
 
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
 logging.getLogger('PIL').setLevel(logging.ERROR)
@@ -20,31 +19,13 @@ def domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner,
     gradients = {}
     wg = {}
     weight = {}
-    dim = dinov2_network.CHANNELS_NUM[args.backbone]
 
     for name, param in model.named_parameters():
-        if param.requires_grad and "bias" not in name and "norm" not in name and "ls" not in name:
-            if "aggregation" not in name:
-                layer_name = '.'.join(name.split('.')[4:-1])
-                if "qkv" in layer_name:
-                    gradients[layer_name+"_q"] = 0
-                    gradients[layer_name+"_k"] = 0
-                    gradients[layer_name+"_v"] = 0
-                    wg[layer_name+"_q"] = 0
-                    wg[layer_name+"_k"] = 0
-                    wg[layer_name+"_v"] = 0
-                    weight[layer_name+"_q"] = 0
-                    weight[layer_name+"_k"] = 0
-                    weight[layer_name+"_v"] = 0
-                else:
-                    gradients[layer_name] = 0
-                    wg[layer_name] = 0
-                    weight[layer_name] = 0
-            else:
-                layer_name = '.'.join(name.split('.')[:-1])
-                gradients[layer_name] = 0
-                wg[layer_name] = 0
-                weight[layer_name] = 0
+        if param.requires_grad and "bias" not in name and "norm" not in name and "ls" not in name and "aggregation" not in name:
+            layer_name = '.'.join(name.split('.')[4:-1])
+            gradients[layer_name] = 0
+            wg[layer_name] = 0
+            weight[layer_name] = 0
 
     epoch_losses=[]
 
@@ -74,39 +55,11 @@ def domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner,
         del loss, features, miner_outputs, images, labels
 
         for name, param in model.named_parameters():
-            if param.requires_grad and "bias" not in name and "norm" not in name and "ls" not in name:
-                if "aggregation" not in name:
-                    layer_name = '.'.join(name.split('.')[4:-1])
-                    if "qkv" in name:
-                        q_weight = param[:dim, :].abs().detach()
-                        k_weight = param[dim:2*dim, :].abs().detach()
-                        v_weight = param[2*dim:, :].abs().detach()
-
-                        q_grad = param.grad[:dim, :].abs().detach()
-                        k_grad = param.grad[dim:2*dim, :].abs().detach()
-                        v_grad = param.grad[2*dim:, :].abs().detach()
-
-                        weight[layer_name+"_q"] += q_weight
-                        weight[layer_name+"_k"] += k_weight
-                        weight[layer_name+"_v"] += v_weight
-
-                        gradients[layer_name+"_q"] += q_grad
-                        gradients[layer_name+"_k"] += k_grad
-                        gradients[layer_name+"_v"] += v_grad
-
-                        wg[layer_name+"_q"] += (q_grad / q_weight).abs().detach()
-                        wg[layer_name+"_k"] += (k_grad / k_weight).abs().detach()
-                        wg[layer_name+"_v"] += (v_grad / v_weight).abs().detach()
-
-                    else:
-                        weight[layer_name] += param.abs().detach()
-                        gradients[layer_name] += param.grad.abs().detach()
-                        wg[layer_name] += (param.grad / param).abs().detach()
-                else:
-                    layer_name = '.'.join(name.split('.')[:-1])
-                    weight[layer_name] += param.abs().detach()
-                    gradients[layer_name] += param.grad.abs().detach()
-                    wg[layer_name] += (param.grad * param).abs().detach()
+            if param.requires_grad and "bias" not in name and "norm" not in name and "ls" not in name and "aggregation" not in name:
+                layer_name = '.'.join(name.split('.')[4:-1])
+                weight[layer_name] += param.abs().detach()
+                gradients[layer_name] += param.grad.abs().detach()
+                wg[layer_name] += (param.grad / param).abs().detach()
 
     for name in gradients:
         gradients[name] /= len(train_dl)
