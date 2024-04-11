@@ -22,6 +22,7 @@ class GSVCitiesDataset(Dataset):
         super(GSVCitiesDataset, self).__init__()
         self.base_path = os.path.join(args.datasets_folder, "gsv_cities/")
         self.cities = cities
+        self.is_inference = False
 
         assert img_per_place <= min_img_per_place, f"img_per_place should be less than {min_img_per_place}"
         self.img_per_place = img_per_place
@@ -67,6 +68,18 @@ class GSVCitiesDataset(Dataset):
         return res.set_index('place_id')
 
     def __getitem__(self, index):
+        if self.is_inference:
+            place_id = self.places_ids[index]
+            row = self.dataframe.loc[place_id].iloc[0]
+            img_name = self.get_img_name(row)
+            img_path = self.base_path + 'Images/' + \
+                row['city_id'] + '/' + img_name
+            img = self.image_loader(img_path)
+            img = self.transform(img)
+
+            return img, torch.tensor([place_id])
+
+
         place_id = self.places_ids[index]
 
         # get the place in form of a dataframe (each row corresponds to one image)

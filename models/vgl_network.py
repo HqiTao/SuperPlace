@@ -1,6 +1,6 @@
 from torch import nn
 
-from models.dinov2_network import DINOv2
+from models import dinov2_network
 import models.aggregations as aggregations
 
 
@@ -8,10 +8,10 @@ class VGLNet(nn.Module):
 
     def __init__(self, args):
         super().__init__()
-        self.backbone = DINOv2(backbone=args.backbone,
+        self.backbone = dinov2_network.DINOv2(backbone=args.backbone,
                                trainable_layers=args.trainable_layers)
         
-        self.aggregation = get_aggregation(args.aggregation)
+        self.aggregation = get_aggregation(args)
         
     def forward(self, x):
         x = self.backbone(x)
@@ -19,6 +19,8 @@ class VGLNet(nn.Module):
         return x
     
 
-def get_aggregation(aggregation_name):
-    if aggregation_name == "salad":
+def get_aggregation(args):
+    if args.aggregation == "salad":
         return aggregations.SALAD()
+    elif args.aggregation == "netvlad":
+        return aggregations.NetVLAD(dim=dinov2_network.CHANNELS_NUM[args.backbone], work_with_tokens=True)

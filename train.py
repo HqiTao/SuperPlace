@@ -7,10 +7,10 @@ from datetime import datetime
 import torch
 from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
-from peft import LoraConfig, get_peft_config
+from peft import LoraConfig, get_peft_model
 
 from utils import util, parser, commons, test, printer, domain_awareness
-from models import vgl_network
+from models import vgl_network, dinov2_network
 from datasets import gsv_cities, base_dataset
 
 
@@ -18,7 +18,7 @@ torch.backends.cudnn.benchmark = True  # Provides a speedup
 #### Initial setup: parser, logging...
 args = parser.parse_arguments()
 start_time = datetime.now()
-args.save_dir = os.path.join("logs", args.save_dir, args.backbone, "gsv_cities")
+args.save_dir = os.path.join("logs", args.save_dir, args.backbone + "_" + args.aggregation, "gsv_cities", start_time.strftime('%Y-%m-%d_%H-%M-%S'))
 commons.setup_logging(args.save_dir)
 commons.make_deterministic(args.seed)
 logging.info(f"Arguments: {args}")
@@ -42,20 +42,34 @@ test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 if args.use_lora:
-    lora_config = LoraConfig(r=8, lora_alpha=32, target_modules=["v", "proj"], lora_dropout=0.01)
+    loaded_data = np.load(os.path.join("logs", args.backbone + "_" + args.aggregation, "gsv_cities", "norm_avg_gradients.npy"), allow_pickle=True).item()
+
+    param_names = loaded_data["param_names"]
+    norm_avg_gradients = loaded_data["norm_avg_gradients"]
+    re_param_names = [param_names[i] for i, value in enumerate(norm_avg_gradients) if value > 0.4]
+
+    lora_config = LoraConfig(r=8, lora_alpha=32, target_modules=re_param_names, lora_dropout=0.01)
 
 #### Initialize model
 model = vgl_network.VGLNet(args)
 model = model.to("cuda")
+
+if args.aggregation == "netvlad":
+    train_ds.is_inference = True
+    if not args.use_awareness:
+        model.aggregation.initialize_netvlad_layer(args, train_ds, model.backbone)
+    args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+    train_ds.is_inference = False
+
 if args.use_lora:
-    model = get_peft_config(model, lora_config)
+    model = get_peft_model(model, lora_config)
+    
 printer.print_trainable_parameters(model)
 printer.print_trainable_layers(model)
 model = torch.nn.DataParallel(model)
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_dl), eta_min=0.1*args.lr)
 scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.2, total_iters=4000)
 criterion = losses.MultiSimilarityLoss(alpha=1.0, beta=50, base=0.0, distance=distances.CosineSimilarity())
 miner = miners.MultiSimilarityMiner(epsilon=0.1, distance=distances.CosineSimilarity())
@@ -113,13 +127,6 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     
     is_best = recalls[0] > best_r1
     
-    # Save checkpoint, which contains all training parameters
-    util.save_checkpoint(args, {"epoch_num": epoch_num, "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(), "recalls": recalls, "best_r1": best_r1,
-        "not_improved_num": not_improved_num
-    }, is_best, filename="last_model.pth")
-    
-    
     if is_best:
         logging.info(f"Improved: previous best R@1 = {best_r1:.1f}, current R@1 = {(recalls[0]):.1f}")
         best_r1 = (recalls[0])
@@ -127,9 +134,16 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     else:
         not_improved_num += 1
         logging.info(f"Not improved: {not_improved_num} / {args.patience}: best R@1 = {best_r1:.1f}, current R@1 = {(recalls[0]):.1f}")
-        if not_improved_num >= args.patience:
-            logging.info(f"Performance did not improve for {not_improved_num} epochs. Stop training.")
-            break
+
+    # Save checkpoint, which contains all training parameters
+    util.save_checkpoint(args, {"epoch_num": epoch_num, "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(), "recalls": recalls, "best_r1": best_r1,
+        "not_improved_num": not_improved_num
+    }, is_best, filename="last_model.pth")
+    
+    if not_improved_num == args.patience:
+        logging.info(f"Performance did not improve for {not_improved_num} epochs. Stop training.")
+        break
 
 logging.info(f"Best R@1: {best_r1:.1f}")
 logging.info(f"Trained for {epoch_num+1:02d} epochs, in total in {str(datetime.now() - start_time)[:-7]}")

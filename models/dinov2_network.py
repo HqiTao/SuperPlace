@@ -18,6 +18,13 @@ CHANNELS_NUM = {
     "dinov2_vitg14": 1536,
 }
 
+LAYERS_NUM = {
+    "dinov2_vits14": 12,
+    "dinov2_vitb14": 12,
+    "dinov2_vitl14": 24,
+    "dinov2_vitg14": 40,
+}
+
 class DINOv2(nn.Module):
 
     def __init__(self, backbone : str, trainable_layers="8, 9, 10, 11", norm_layer = True, return_token = True):
@@ -33,7 +40,7 @@ class DINOv2(nn.Module):
         util.split_and_assign_qkv_parameters(model = self.model, pretrained_dict = model_state_dict)
 
         if trainable_layers == "all":
-            self.trainable_layers = list(range(12))
+            self.trainable_layers = list(range(LAYERS_NUM[backbone]))
         else:
             self.trainable_layers = [int(x.strip()) for x in trainable_layers.split(',')]
 
