@@ -2,7 +2,7 @@ import argparse
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Cross-domain Switch-aware Re-parameterization Visual Geo-Loclization",
+    parser = argparse.ArgumentParser(description="Cross-domain Switch-aware Re-parameterization for Visual Geo-Loclization",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # Awareness parameters
     parser.add_argument("--use_awareness", action="store_true",

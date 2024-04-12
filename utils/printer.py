@@ -19,8 +19,8 @@ def print_trainable_layers(model):
     """
     layer_names = []
     for name, param in model.named_parameters():
-        if param.requires_grad and "bias" not in name and "aggregation" not in name:
-            layer_names.append(".".join(name.split(".")[2:-1]))
+        if param.requires_grad and "bias" not in name:
+            layer_names.append(name)
 
     logging.info(", ".join(layer_names))
 

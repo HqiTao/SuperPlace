@@ -21,6 +21,6 @@ class VGLNet(nn.Module):
 
 def get_aggregation(args):
     if args.aggregation == "salad":
-        return aggregations.SALAD()
+        return aggregations.SALAD(num_channels = dinov2_network.CHANNELS_NUM[args.backbone])
     elif args.aggregation == "netvlad":
         return aggregations.NetVLAD(dim=dinov2_network.CHANNELS_NUM[args.backbone], work_with_tokens=True)

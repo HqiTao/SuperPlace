@@ -46,9 +46,10 @@ if args.use_lora:
 
     param_names = loaded_data["param_names"]
     norm_avg_gradients = loaded_data["norm_avg_gradients"]
-    re_param_names = [param_names[i] for i, value in enumerate(norm_avg_gradients) if value > 0.4]
+    re_param_names = [param_names[i] for i, value in enumerate(norm_avg_gradients) if value > 0.55]
+    # re_param_names = ["q", "v"]
 
-    lora_config = LoraConfig(r=8, lora_alpha=32, target_modules=re_param_names, lora_dropout=0.01)
+    lora_config = LoraConfig(r=8, lora_alpha=32, target_modules=re_param_names, lora_dropout=0.01, modules_to_save=["aggregation"])
 
 #### Initialize model
 model = vgl_network.VGLNet(args)
@@ -63,10 +64,11 @@ if args.aggregation == "netvlad":
 
 if args.use_lora:
     model = get_peft_model(model, lora_config)
+
+model = torch.nn.DataParallel(model)
     
 printer.print_trainable_parameters(model)
 printer.print_trainable_layers(model)
-model = torch.nn.DataParallel(model)
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
@@ -140,6 +142,9 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
         "optimizer_state_dict": optimizer.state_dict(), "recalls": recalls, "best_r1": best_r1,
         "not_improved_num": not_improved_num
     }, is_best, filename="last_model.pth")
+
+    if args.use_lora:
+        model.module.save_pretrained(os.path.join(args.save_dir, "lora"))
     
     if not_improved_num == args.patience:
         logging.info(f"Performance did not improve for {not_improved_num} epochs. Stop training.")

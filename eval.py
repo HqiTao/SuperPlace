@@ -6,6 +6,7 @@ import torch
 from utils import parser, commons, util, test
 from models import vgl_network, dinov2_network
 from datasets import base_dataset
+from peft import PeftModel
 
 args = parser.parse_arguments()
 start_time = datetime.now()
@@ -20,8 +21,13 @@ model = model.to("cuda")
 if args.aggregation == "netvlad":
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
 if args.resume != None:
-    logging.info(f"Resuming model from {args.resume}")
-    model = util.resume_model(args, model)
+    if args.use_lora:
+        logging.info(f"Resuming lora model from {args.resume}")
+        model = PeftModel.from_pretrained(model, args.resume)
+    else:
+        logging.info(f"Resuming model from {args.resume}")
+        model = util.resume_model(args, model)
+    
 model = torch.nn.DataParallel(model)
 
 if args.pca_dim is None:
