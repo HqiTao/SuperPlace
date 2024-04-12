@@ -9,3 +9,8 @@ Cross-domain Switch-aware Re-parameterization for Visual Geo-Localization
 * add the adaptive lora or dora **OK**
 * add classification layer for domain recognition
 * add auto-switch feature in testing
+
+## TODO
+* Pittsburgh
+* MDR Loss + Triplet Loss
+* KD Loss + Fast(Light, Mobile) ViT
