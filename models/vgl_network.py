@@ -24,3 +24,5 @@ def get_aggregation(args):
         return aggregations.SALAD(num_channels = dinov2_network.CHANNELS_NUM[args.backbone])
     elif args.aggregation == "netvlad":
         return aggregations.NetVLAD(dim=dinov2_network.CHANNELS_NUM[args.backbone], work_with_tokens=True)
+    elif args.aggregation == "cosgem":
+        return aggregations.CosGeM(features_dim=dinov2_network.CHANNELS_NUM[args.backbone], fc_output_dim=args.features_dim)

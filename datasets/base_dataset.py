@@ -2,6 +2,7 @@ import os
 import numpy as np
 from glob import glob
 from PIL import Image
+from tqdm import tqdm
 from sklearn.neighbors import NearestNeighbors
 
 import torchvision.transforms as transforms
@@ -18,12 +19,12 @@ class BaseDataset(data.Dataset):
         self.args = args
         self.dataset_name = self.args.dataset_name
         self.dataset_folder = os.path.join(self.args.datasets_folder, self.dataset_name, "images", split)
-        
+        self.queries_name = args.queries_name if args.queries_name != None else "queries"
         self.resize = args.resize
         
         #### Read paths and UTM coordinates for all images.
         database_folder = os.path.join(self.dataset_folder, "database")
-        queries_folder = os.path.join(self.dataset_folder, "queries")
+        queries_folder = os.path.join(self.dataset_folder, self.queries_name)
 
         self.database_paths = sorted(glob(os.path.join(database_folder, "**", "*.jpg"), recursive=True))
         self.queries_paths = sorted(glob(os.path.join(queries_folder, "**", "*.jpg"),  recursive=True))
@@ -43,9 +44,11 @@ class BaseDataset(data.Dataset):
         self.database_num = len(self.database_paths)
         self.queries_num = len(self.queries_paths)
 
+        self.mean, self.std = self.compute_mean_and_variance()
+
         self.transform = transforms.Compose([transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
                                              transforms.ToTensor(),
-                                             transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
+                                             transforms.Normalize(mean=self.mean, std=self.std),])
     
     def __getitem__(self, index):
         img = Image.open(self.images_paths[index]).convert("RGB")
@@ -61,3 +64,23 @@ class BaseDataset(data.Dataset):
     
     def get_positives(self):
         return self.soft_positives_per_query
+    
+    def compute_mean_and_variance(self):
+        sum_image = None
+        sum_square_image = None
+
+        for image_path in tqdm(self.database_paths):
+            with Image.open(image_path) as img:
+                img_resized = img.resize((224, 224))
+                img_array = np.array(img_resized) / 255.0
+                if sum_image is None:
+                    sum_image = np.zeros_like(img_array)
+                    sum_square_image = np.zeros_like(img_array)
+                
+                sum_image += img_array
+                sum_square_image += img_array ** 2
+
+        mean = np.mean(sum_image / self.database_num, axis=(0, 1))
+        std = np.sqrt(np.mean(sum_square_image / self.database_num - (sum_image / self.database_num) ** 2, axis=(0, 1)))
+
+        return mean.tolist(), std.tolist()

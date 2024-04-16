@@ -48,7 +48,7 @@ class SALAD(nn.Module):
             num_clusters=64,
             cluster_dim=128,
             token_dim=256,
-            dropout=0.3,
+            dropout=0.2,
         ) -> None:
         super().__init__()
 
@@ -65,21 +65,21 @@ class SALAD(nn.Module):
         # MLP for global scene token g
         self.token_features = nn.Sequential(
             nn.Linear(self.num_channels, 512),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(512, self.token_dim)
         )
         # MLP for local features f_i
         self.cluster_features = nn.Sequential(
             nn.Conv2d(self.num_channels, 512, 1),
             dropout,
-            nn.ReLU(),
+            nn.GELU(),
             nn.Conv2d(512, self.cluster_dim, 1)
         )
         # MLP for score matrix S
         self.score = nn.Sequential(
             nn.Conv2d(self.num_channels, 512, 1),
             dropout,
-            nn.ReLU(),
+            nn.GELU(),
             nn.Conv2d(512, self.num_clusters, 1),
         )
         # Dustbin parameter z

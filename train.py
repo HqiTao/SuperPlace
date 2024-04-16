@@ -31,7 +31,10 @@ logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.dat
 if args.use_awareness:
     train_ds = gsv_cities.GSVCitiesDataset(args)
 else:
-    train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
+    if args.use_extra_datasets:
+        train_ds = gsv_cities.GSVCitiesDataset(args, cities=(gsv_cities.EXTRA_DATASETS + gsv_cities.TRAIN_CITIES))
+    else:
+        train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
 
 train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
@@ -42,14 +45,14 @@ test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 if args.use_lora:
-    loaded_data = np.load(os.path.join("logs", args.backbone + "_" + args.aggregation, "gsv_cities", "norm_avg_gradients.npy"), allow_pickle=True).item()
+    # loaded_data = np.load(os.path.join("logs", args.backbone + "_" + args.aggregation, "gsv_cities", "norm_avg_gradients.npy"), allow_pickle=True).item()
 
-    param_names = loaded_data["param_names"]
-    norm_avg_gradients = loaded_data["norm_avg_gradients"]
-    re_param_names = [param_names[i] for i, value in enumerate(norm_avg_gradients) if value > 0.55]
-    # re_param_names = ["q", "v"]
+    # param_names = loaded_data["param_names"]
+    # norm_avg_gradients = loaded_data["norm_avg_gradients"]
+    # re_param_names = [param_names[i] for i, value in enumerate(norm_avg_gradients) if value > 0.55]
+    re_param_names = ["q", "k", "v", "proj"]
 
-    lora_config = LoraConfig(r=8, lora_alpha=32, target_modules=re_param_names, lora_dropout=0.01, modules_to_save=["aggregation"])
+    lora_config = LoraConfig(r=32, lora_alpha=32, use_dora= True, target_modules=re_param_names, lora_dropout=0.01, modules_to_save=["aggregation"])
 
 #### Initialize model
 model = vgl_network.VGLNet(args)

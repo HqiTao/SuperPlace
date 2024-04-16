@@ -4,11 +4,13 @@ import argparse
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Cross-domain Switch-aware Re-parameterization for Visual Geo-Loclization",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    # Awareness parameters
+    # Ablation parameters
     parser.add_argument("--use_awareness", action="store_true",
                         help="domain awareness")
     parser.add_argument("--use_lora", action="store_true",
                         help="low rank adaption")
+    parser.add_argument("--use_extra_datasets", action="store_true",
+                        help="extra datasets")
     # Training parameters
     parser.add_argument("--train_batch_size", type=int, default=32,
                         help="Batch size for training.")
@@ -21,7 +23,7 @@ def parse_arguments():
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
                         choices=["dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
-    parser.add_argument("--aggregation", type=str, default="salad", choices=["salad", "netvlad"])
+    parser.add_argument("--aggregation", type=str, default="salad", choices=["salad", "netvlad", "cosgem"])
     parser.add_argument("--trainable_layers", type=str, default="8, 9, 10, 11",
                     help="Comma-separated list of layer indexes to be trained")
     parser.add_argument("--features_dim", type=int, default=8448,
@@ -41,6 +43,8 @@ def parse_arguments():
     # Paths parameters
     parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/Projects/npr/datasets", help="Path with all datasets")
     parser.add_argument("--dataset_name", type=str, default="pitts30k", help="Relative path of the dataset")
+    parser.add_argument("--queries_name", type=str, default=None,
+                        help="Path with images to be queried")
     parser.add_argument("--pca_dataset_folder", type=str, default=None,
                         help="Path with images to be used to compute PCA (ie: pitts30k/images/train")
     parser.add_argument("--save_dir", type=str, default="",
