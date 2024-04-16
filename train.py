@@ -9,7 +9,7 @@ from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
 from peft import LoraConfig, get_peft_model
 
-from utils import util, parser, commons, test, printer, domain_awareness
+from utils import util, parser, commons, test, printer, domain_awareness , metrix_loss
 from models import vgl_network, dinov2_network
 from datasets import gsv_cities, base_dataset
 
@@ -110,8 +110,19 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
         with torch.cuda.amp.autocast():
 
             features = model(images)
-            miner_outputs = miner(features, labels)
-            loss = criterion(features, labels, miner_outputs)
+
+            if args.mixup:
+                a1, p, a2, n = miner(features, labels)
+                sim_mix, _, _, a2_pn, pos_pn, neg_pn, lam_pn = metrix_loss.embed_posneg_pair_mixup_for_pos_anchor(a1, p, a2, n, features, labels, distances.CosineSimilarity())
+
+                pos_loss = metrix_loss.multisimilarity_positive_loss(sim_mix, 0.1, 0, a1, p, distances.CosineSimilarity(), features, a2_pn, pos_pn, lam_pn)
+
+                neg_loss = metrix_loss.multisimilarity_negative_loss(sim_mix, 50, 0, a2, n, distances.CosineSimilarity(), features, a2_pn, neg_pn, lam_pn)
+
+                loss = torch.mean(pos_loss + neg_loss)
+            else:
+                miner_outputs = miner(features, labels)
+                loss = criterion(features, labels, miner_outputs)
 
         scaler.scale(loss).backward()
         scaler.step(optimizer)
@@ -121,7 +132,10 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
         batch_loss = loss.item()
         epoch_losses = np.append(epoch_losses, batch_loss)
 
-        del loss, features, miner_outputs, images, labels
+        if args.mixup:
+            del loss, features, a1, p, a2, n, images, labels, sim_mix, a2_pn, pos_pn, neg_pn, lam_pn, pos_loss, neg_loss
+        else:
+            del loss, features, miner_outputs, images, labels
 
     logging.info(f"Finished epoch {epoch_num:02d} in {str(datetime.now() - epoch_start_time)[:-7]}, "
         f"average epoch loss = {epoch_losses.mean():.4f}")
