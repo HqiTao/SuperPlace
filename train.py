@@ -9,7 +9,7 @@ from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
 from peft import LoraConfig, get_peft_model
 
-from utils import util, parser, commons, test, printer, domain_awareness , metrix_loss
+from utils import util, parser, commons, test, domain_awareness , metrix_loss
 from models import vgl_network, dinov2_network
 from datasets import gsv_cities, base_dataset
 
@@ -70,8 +70,8 @@ if args.use_lora:
 
 model = torch.nn.DataParallel(model)
     
-printer.print_trainable_parameters(model)
-printer.print_trainable_layers(model)
+util.print_trainable_parameters(model)
+util.print_trainable_layers(model)
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)

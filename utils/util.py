@@ -94,3 +94,27 @@ def compute_pca(args, model, pca_dataset_folder, full_features_dim):
     pca = PCA(args.pca_dim)
     pca.fit(pca_features)
     return pca
+
+def print_trainable_parameters(model):
+    """
+    Prints the number of trainable parameters in the model.
+    """
+    trainable_params = 0
+    all_param = 0
+    for _, param in model.named_parameters():
+        all_param += param.numel()
+        if param.requires_grad:
+            trainable_params += param.numel()
+    logging.info(f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param:.2f}")
+
+
+def print_trainable_layers(model):
+    """
+    Prints the name of trainable parameters in the model.
+    """
+    layer_names = []
+    for name, param in model.named_parameters():
+        if param.requires_grad and "bias" not in name:
+            layer_names.append(name)
+
+    logging.info(", ".join(layer_names))
