@@ -17,8 +17,8 @@ class BaseDataset(data.Dataset):
     def __init__(self, args, split="train"):
         super().__init__()
         self.args = args
-        self.dataset_name = self.args.dataset_name
-        self.dataset_folder = os.path.join(self.args.datasets_folder, self.dataset_name, "images", split)
+        self.dataset_name = args.dataset_name
+        self.dataset_folder = os.path.join(args.datasets_folder, self.dataset_name, "images", split)
         self.queries_name = args.queries_name if args.queries_name != None else "queries"
         self.resize = args.resize
         
