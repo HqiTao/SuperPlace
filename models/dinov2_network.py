@@ -34,7 +34,7 @@ class DINOv2(nn.Module):
         self.norm_layer = norm_layer
         self.return_token = return_token
 
-        pretrained_model_path = f"/home/ubuntu/.cache/torch/hub/checkpoints/{backbone}_pretrain.pth"
+        pretrained_model_path = f"/media/hello/data1/binux/checkpoints/{backbone}_pretrain.pth"
         model_state_dict = torch.load(pretrained_model_path)
         self.model.load_state_dict(model_state_dict, strict = False)
         util.split_and_assign_qkv_parameters(model = self.model, pretrained_dict = model_state_dict)

@@ -34,7 +34,8 @@ class GSVCitiesDataset(Dataset):
         self.transform = transforms.Compose([transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
                                     transforms.RandAugment(num_ops=3, interpolation=transforms.InterpolationMode.BILINEAR),
                                     transforms.ToTensor(),
-                                    transforms.Normalize(mean=GSVCITIES_MEAN_STD['mean'], std=GSVCITIES_MEAN_STD['std']),])
+                                    # transforms.Normalize(mean=GSVCITIES_MEAN_STD['mean'], std=GSVCITIES_MEAN_STD['std']),])
+                                    transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
 
         # generate the dataframe contraining images metadata
         self.dataframe = self.__getdataframes()

@@ -44,11 +44,12 @@ class BaseDataset(data.Dataset):
         self.database_num = len(self.database_paths)
         self.queries_num = len(self.queries_paths)
 
-        self.mean, self.std = self.compute_mean_and_variance()
+        # self.mean, self.std = self.compute_mean_and_variance()
 
         self.transform = transforms.Compose([transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
                                              transforms.ToTensor(),
-                                             transforms.Normalize(mean=self.mean, std=self.std),])
+                                            #  transforms.Normalize(mean=self.mean, std=self.std),])
+                                             transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
     
     def __getitem__(self, index):
         img = Image.open(self.images_paths[index]).convert("RGB")

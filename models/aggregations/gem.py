@@ -41,7 +41,7 @@ class L2Norm(nn.Module):
     
 class CosGeM(nn.Module):
     def __init__(self, features_dim, fc_output_dim):
-        super().init()
+        super().__init__()
         self.norm1 = L2Norm()
         self.gem = GeM()
         self.flatten = Flatten()

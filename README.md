@@ -14,6 +14,9 @@ Cross-domain Switch-aware Re-parameterization for Visual Geo-Localization
 * MDR Loss + Triplet Loss
 * KD Loss + Fast(Light, Mobile) ViT
 
+# Re-produce
+* change the pre-trained model path (dinov2_network.py, L37)
+
 
 ## Experiments
 
@@ -26,3 +29,4 @@ Cross-domain Switch-aware Re-parameterization for Visual Geo-Localization
 ## Experiments -extra datasets (SF-XL)
 
 * DINO-B + SALAD + last 4 layers
+* DINO-B + GeM + last 4 layers
