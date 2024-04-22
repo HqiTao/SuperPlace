@@ -6,31 +6,34 @@ from torch import nn
 
 class MDescAug(nn.Module):
     """ Top-M Descriptor Augmentation"""
-    def __init__(self, M = 400, K = 9, beta = 0.15):
+    def __init__(self, M = 30, K = 19, beta = 0.15):
         super(MDescAug, self).__init__()
         self.M = M
-        self.K = K + 1 # including oneself
+        self.K = K + 1
         self.beta = beta
-    def forward(self, X, Q, ranks):
 
-        #ranks = torch.argsort(-sim, axis=0) # 6322 70
-        
+    def forward(self, X, Q, ranks):
         
         ranks_trans_1000 = torch.transpose(ranks,1,0)[:,:self.M] # 70 400 
         
         
-        X_tensor1 = torch.tensor(X[ranks_trans_1000]).cuda()
+        X_tensor1 = X[ranks_trans_1000].clone().detach().cuda()
         
         res_ie = torch.einsum('abc,adc->abd',
-                X_tensor1,X_tensor1) # 70 400 400
+                X_tensor1, X_tensor1) # 70 400 400
+
+        del X_tensor1
 
         res_ie_ranks = torch.unsqueeze(torch.argsort(-res_ie.clone(), axis=-1)[:,:,:self.K],-1) # 70 400 10 1
         res_ie_ranks_value = torch.unsqueeze(-torch.sort(-res_ie.clone(), axis=-1)[0][:,:,:self.K],-1) # 70 400 10 1
-        res_ie_ranks_value = res_ie_ranks_value
+        del res_ie
+
         res_ie_ranks_value[:,:,1:,:] *= self.beta
         res_ie_ranks_value[:,:,0:1,:] = 1.
         res_ie_ranks = torch.squeeze(res_ie_ranks,-1) # 70 400 10
         x_dba = X[ranks_trans_1000] # 70 1 400 2048
+
+        del X
         
         
         x_dba_list = []
@@ -40,11 +43,17 @@ class MDescAug(nn.Module):
             # but i just want to go to bed.
             # i 400 10 j # 400 2048
             x_dba_list.append(j[i])
+
+        del res_ie_ranks
         
         x_dba = torch.stack(x_dba_list,0) # 70 400 10 2048
         
         x_dba = torch.sum(x_dba * res_ie_ranks_value, 2) / torch.sum(res_ie_ranks_value,2) # 70 400 2048
+        del res_ie_ranks_value
+
         res_top1000_dba = torch.einsum('ac,adc->ad', Q, x_dba) # 70 400 
+
+        del Q
  
         ranks_trans_1000_pre = torch.argsort(-res_top1000_dba,-1) # 70 400
         rerank_dba_final = []
@@ -55,7 +64,7 @@ class MDescAug(nn.Module):
     
 class RerankwMDA(nn.Module):
     """ Reranking with maximum descriptors aggregation """
-    def __init__(self, M=400, K = 9, beta = 0.15):
+    def __init__(self, M=30, K = 19, beta = 0.15):
         super(RerankwMDA, self).__init__()
         self.M = M 
         self.K = K + 1 # including oneself

@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 import torch
 
-from utils import parser, commons, util, test
+from utils import parser, commons, util, test, test_super, test_vis
 from models import vgl_network, dinov2_network
 from datasets import base_dataset
 from peft import PeftModel
@@ -17,6 +17,7 @@ logging.info(f"Arguments: {args}")
 logging.info(f"The outputs are being saved in {args.save_dir}")
 
 model = vgl_network.VGLNet(args)
+# model = dinov2_network.DINOv2(backbone=args.backbone)
 model = model.to("cuda")
 if args.aggregation == "netvlad":
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
@@ -45,3 +46,7 @@ recalls, recalls_str = test.test(args, test_ds, model)
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
 
 logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
+
+######################################### Vis on DEMO SET ########################################
+
+# test_vis.test(args, test_ds, model)

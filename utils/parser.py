@@ -28,13 +28,15 @@ def parse_arguments():
     parser.add_argument("--aggregation", type=str, default="salad", choices=["salad", "netvlad", "cosgem"])
     parser.add_argument("--trainable_layers", type=str, default="8, 9, 10, 11",
                     help="Comma-separated list of layer indexes to be trained")
-    parser.add_argument("--features_dim", type=int, default=8448,
+    parser.add_argument("--features_dim", type=int, default=768,
                         help="features_dim")
     parser.add_argument("--clusters", type=int, default=64)
     parser.add_argument('--pca_dim', type=int, default=None, help="PCA dimension (number of principal components). If None, PCA is not used.")
     # Initialization parameters
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--resume", type=str, default="logs/dinov2_vitb14_salad/gsv_cities/2024-04-15_18-55-47/best_model.pth",
+    # parser.add_argument("--resume", type=str, default="/media/hello/data1/binux/projects/DomainPlaces/logs/dinov2_vitb14_cosgem/gsv_cities/bs32_322/best_model.pth",
+    #                     help="Path to load checkpoint from, for resuming training or testing.")
+    parser.add_argument("--resume", type=str, default=None,
                         help="Path to load checkpoint from, for resuming training or testing.")
     # Other parameters
     parser.add_argument("--num_workers", type=int, default=12, help="num_workers for all dataloaders")
@@ -43,8 +45,8 @@ def parse_arguments():
     parser.add_argument('--recall_values', type=int, default=[1, 5, 10, 100], nargs="+",
                         help="Recalls to be computed, such as R@1.")
     # Paths parameters
-    # parser.add_argument("--datasets_folder", type=str, default="/media/hello/data1/binux/datasets", help="Path with all datasets")
-    parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/Projects/npr/datasets", help="Path with all datasets")
+    parser.add_argument("--datasets_folder", type=str, default="/media/hello/data1/binux/datasets", help="Path with all datasets")
+    # parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/Projects/npr/datasets", help="Path with all datasets")
     parser.add_argument("--dataset_name", type=str, default="pitts30k", help="Relative path of the dataset")
     parser.add_argument("--queries_name", type=str, default=None,
                         help="Path with images to be queried")
