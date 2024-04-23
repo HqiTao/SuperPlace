@@ -9,7 +9,7 @@ from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
 from peft import LoraConfig, get_peft_model
 
-from utils import util, parser, commons, test, domain_awareness, mdr_loss
+from utils import util, parser, commons, test, domain_awareness, task_awareness
 from models import vgl_network, dinov2_network
 from datasets import gsv_cities, base_dataset
 
@@ -28,7 +28,7 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 #### Creation of Datasets
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
-if args.use_awareness:
+if args.domain_awareness or args.task_awareness:
     train_ds = gsv_cities.GSVCitiesDataset(args)
 else:
     if args.use_extra_datasets:
@@ -60,8 +60,7 @@ model = model.to("cuda")
 
 if args.aggregation == "netvlad":
     train_ds.is_inference = True
-    if not args.use_awareness:
-        model.aggregation.initialize_netvlad_layer(args, train_ds, model.backbone)
+    model.aggregation.initialize_netvlad_layer(args, train_ds, model.backbone)
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
     train_ds.is_inference = False
 
@@ -87,7 +86,11 @@ if args.resume:
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
-if args.use_awareness:
+if args.task_awareness:
+    task_awareness.task_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
+    sys.exit()
+
+if args.domain_awareness:
     domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
     sys.exit()
 

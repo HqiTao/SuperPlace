@@ -45,9 +45,6 @@ def domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner,
             loss = criterion(features, labels, miner_outputs)
 
         scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
-        # scheduler.step()
 
         batch_loss = loss.item()
         epoch_losses = np.append(epoch_losses, batch_loss)

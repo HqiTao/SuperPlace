@@ -51,6 +51,8 @@ class DINOv2(nn.Module):
 
         if trainable_layers == "all":
             self.trainable_layers = list(range(LAYERS_NUM[backbone]))
+        elif trainable_layers == "frozen":
+            self.trainable_layers = []
         else:
             self.trainable_layers = [int(x.strip()) for x in trainable_layers.split(',')]
 

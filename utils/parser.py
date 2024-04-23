@@ -5,10 +5,10 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Cross-domain Switch-aware Re-parameterization for Visual Geo-Loclization",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # Ablation parameters
-    # parser.add_argument("--use_mixup", action="store_true",
-    #                     help="domain awareness")
-    parser.add_argument("--use_awareness", action="store_true",
+    parser.add_argument("--domain_awareness", action="store_true",
                         help="domain awareness")
+    parser.add_argument("--task_awareness", action="store_true",
+                        help="task awareness")
     parser.add_argument("--use_lora", action="store_true",
                         help="low rank adaption")
     parser.add_argument("--use_extra_datasets", action="store_true",
@@ -25,7 +25,7 @@ def parse_arguments():
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
                         choices=["dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
-    parser.add_argument("--aggregation", type=str, default="salad", choices=["salad", "netvlad", "cosgem"])
+    parser.add_argument("--aggregation", type=str, default="salad", choices=["salad", "netvlad", "cosgem", "kernelgem", "maskedchannelgem"])
     parser.add_argument("--trainable_layers", type=str, default="8, 9, 10, 11",
                     help="Comma-separated list of layer indexes to be trained")
     parser.add_argument("--features_dim", type=int, default=768,

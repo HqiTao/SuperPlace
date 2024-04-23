@@ -20,7 +20,6 @@ def test(args, eval_ds, model):
     feature_maps = []
     with torch.no_grad():
         logging.debug("Extracting database features for evaluation/testing")
-        # For database use "hard_resize", although it usually has no effect because database images have same resolution
         database_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num)))
         database_dataloader = DataLoader(dataset=database_subset_ds, num_workers=args.num_workers,
                                          batch_size=1, pin_memory=True)
