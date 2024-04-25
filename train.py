@@ -9,7 +9,7 @@ from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
 from peft import LoraConfig, get_peft_model
 
-from utils import util, parser, commons, test, domain_awareness, task_awareness
+from utils import util, parser, commons, test, domain_awareness
 from models import vgl_network, dinov2_network
 from datasets import gsv_cities, base_dataset
 
@@ -28,7 +28,7 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 #### Creation of Datasets
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
-if args.domain_awareness or args.task_awareness:
+if args.domain_awareness:
     train_ds = gsv_cities.GSVCitiesDataset(args)
 else:
     if args.use_extra_datasets:
@@ -44,16 +44,6 @@ logging.info(f"Val set: {val_ds}")
 test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
-if args.use_lora:
-    # loaded_data = np.load(os.path.join("logs", args.backbone + "_" + args.aggregation, "gsv_cities", "norm_avg_gradients.npy"), allow_pickle=True).item()
-
-    # param_names = loaded_data["param_names"]
-    # norm_avg_gradients = loaded_data["norm_avg_gradients"]
-    # re_param_names = [param_names[i] for i, value in enumerate(norm_avg_gradients) if value > 0.55]
-    re_param_names = ["q", "k", "v", "proj"]
-
-    lora_config = LoraConfig(r=32, lora_alpha=32, use_dora= True, target_modules=re_param_names, lora_dropout=0.01, modules_to_save=["aggregation"])
-
 #### Initialize model
 model = vgl_network.VGLNet(args)
 model = model.to("cuda")
@@ -65,6 +55,11 @@ if args.aggregation == "netvlad":
     train_ds.is_inference = False
 
 if args.use_lora:
+    lora_modules = ["8.attn.q", "8.atten.k", "8.attn.v", "8.attn.proj", "8.mlp.fc1", "8.mlp.fc2",
+                    "9.attn.q", "9.atten.k", "9.attn.v", "9.attn.proj", "9.mlp.fc1", "9.mlp.fc2",
+                    "10.attn.q", "10.atten.k", "10.attn.v", "10.attn.proj","10.mlp.fc1", "10.mlp.fc2",
+                    "11.attn.q", "11.atten.k", "11.attn.v", "11.attn.proj", "11.mlp.fc1", "11.mlp.fc2",]
+    lora_config = LoraConfig(r=32, lora_alpha=64, use_dora= True, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
     model = get_peft_model(model, lora_config)
 
 model = torch.nn.DataParallel(model)
@@ -74,7 +69,8 @@ util.print_trainable_layers(model)
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.2, total_iters=4000)
+if not args.resume:
+    scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.2, total_iters=4000)
 criterion = losses.MultiSimilarityLoss(alpha=1.0, beta=50, base=0.0, distance=distances.CosineSimilarity())
 miner = miners.MultiSimilarityMiner(epsilon=0.1, distance=distances.CosineSimilarity())
 scaler = torch.cuda.amp.GradScaler()
@@ -86,9 +82,6 @@ if args.resume:
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
-if args.task_awareness:
-    task_awareness.task_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
-    sys.exit()
 
 if args.domain_awareness:
     domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
@@ -119,11 +112,11 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
-        scheduler.step()
+        if not args.resume:
+            scheduler.step()
 
         batch_loss = loss.item()
         epoch_losses = np.append(epoch_losses, batch_loss)
-
 
         del loss, features, miner_outputs, images, labels
 

@@ -1,4 +1,4 @@
-import faiss
+import faiss, os
 import logging
 import numpy as np
 from tqdm import tqdm
@@ -6,6 +6,7 @@ from tqdm import tqdm
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Subset
+from utils import visualizations
 
 def test(args, eval_ds, model):
     """Compute features of the given dataset and compute the recalls."""
@@ -22,12 +23,19 @@ def test(args, eval_ds, model):
                                          batch_size=args.infer_batch_size, pin_memory=True)
         all_features = np.empty((len(eval_ds), args.features_dim), dtype="float32")
 
-        for inputs, indices in tqdm(database_dataloader, ncols=100):
-            features = model(inputs.to("cuda"))
-            features = features.cpu().numpy()
-            # if pca is not None:
-            #     features = pca.transform(features)
-            all_features[indices.numpy(), :] = features
+        database_features_dir = os.path.join(args.datasets_folder, args.dataset_name, 'images/test', "database_features.npy")
+        if os.path.isfile(database_features_dir) == 1:
+            database_features = np.load(database_features_dir)
+        else: 
+            for inputs, indices in tqdm(database_dataloader, ncols=100):
+                features = model(inputs.to("cuda"))
+                features = features.cpu().numpy()
+                # if pca is not None:
+                #     features = pca.transform(features)
+                all_features[indices.numpy(), :] = features
+
+            database_features = all_features[:eval_ds.database_num]
+            np.save(database_features_dir, database_features)
         
         logging.debug("Extracting queries features for evaluation/testing")
         queries_infer_batch_size = args.infer_batch_size
@@ -43,7 +51,7 @@ def test(args, eval_ds, model):
             all_features[indices.numpy(), :] = features
     
     queries_features = all_features[eval_ds.database_num:]
-    database_features = all_features[:eval_ds.database_num]
+    # database_features = all_features[:eval_ds.database_num]
     
     faiss_index = faiss.IndexFlatL2(args.features_dim)
     faiss_index.add(database_features)
@@ -64,4 +72,13 @@ def test(args, eval_ds, model):
     # Divide by the number of queries*100, so the recalls are in percentages
     recalls = recalls / eval_ds.queries_num * 100
     recalls_str = ", ".join([f"R@{val}: {rec:.1f}" for val, rec in zip(args.recall_values, recalls)])
+
+    # Save visualizations of predictions
+    if args.num_preds_to_save != 0:
+        logging.info("Saving final predictions")
+        # For each query save num_preds_to_save predictions
+        visualizations.save_preds(predictions[:, :args.num_preds_to_save], eval_ds,
+                                args.save_dir, args.save_only_wrong_preds)
+
+
     return recalls, recalls_str

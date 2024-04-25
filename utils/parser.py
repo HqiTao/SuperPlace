@@ -7,12 +7,12 @@ def parse_arguments():
     # Ablation parameters
     parser.add_argument("--domain_awareness", action="store_true",
                         help="domain awareness")
-    parser.add_argument("--task_awareness", action="store_true",
-                        help="task awareness")
     parser.add_argument("--use_lora", action="store_true",
                         help="low rank adaption")
     parser.add_argument("--use_extra_datasets", action="store_true",
                         help="extra datasets")
+    parser.add_argument("--channels_num", type=int, default=4,
+                        help="channel attention")
     # Training parameters
     parser.add_argument("--train_batch_size", type=int, default=32,
                         help="Batch size for training.")
@@ -25,7 +25,7 @@ def parse_arguments():
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
                         choices=["dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
-    parser.add_argument("--aggregation", type=str, default="salad", choices=["salad", "netvlad", "cosgem", "kernelgem", "maskedchannelgem"])
+    parser.add_argument("--aggregation", type=str, default="cosgem", choices=["salad", "netvlad", "cosgem", "cagem"])
     parser.add_argument("--trainable_layers", type=str, default="8, 9, 10, 11",
                     help="Comma-separated list of layer indexes to be trained")
     parser.add_argument("--features_dim", type=int, default=768,
@@ -34,12 +34,10 @@ def parse_arguments():
     parser.add_argument('--pca_dim', type=int, default=None, help="PCA dimension (number of principal components). If None, PCA is not used.")
     # Initialization parameters
     parser.add_argument("--seed", type=int, default=0)
-    # parser.add_argument("--resume", type=str, default="/media/hello/data1/binux/projects/DomainPlaces/logs/dinov2_vitb14_cosgem/gsv_cities/bs32_322/best_model.pth",
-    #                     help="Path to load checkpoint from, for resuming training or testing.")
     parser.add_argument("--resume", type=str, default=None,
                         help="Path to load checkpoint from, for resuming training or testing.")
     # Other parameters
-    parser.add_argument("--num_workers", type=int, default=12, help="num_workers for all dataloaders")
+    parser.add_argument("--num_workers", type=int, default=16, help="num_workers for all dataloaders")
     parser.add_argument('--resize', type=int, default=[224, 224], nargs=2, help="Resizing shape for images (HxW).")
     parser.add_argument("--val_positive_dist_threshold", type=int, default=25, help="_")
     parser.add_argument('--recall_values', type=int, default=[1, 5, 10, 100], nargs="+",
@@ -54,6 +52,12 @@ def parse_arguments():
                         help="Path with images to be used to compute PCA (ie: pitts30k/images/train")
     parser.add_argument("--save_dir", type=str, default="",
                         help="Folder name of the current run (saved in ./logs/)")
+    parser.add_argument("--num_preds_to_save", type=int, default=0,
+                        help="set != 0 if you want to save predictions for each query")
+    parser.add_argument("--save_only_wrong_preds", action="store_true",
+                        help="set to true if you want to save predictions only for "
+                        "wrongly predicted queries")
+    
     args = parser.parse_args()
 
     return args
