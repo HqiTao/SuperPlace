@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+import numpy as np
+
 # Code from SuperGlue (https://github.com/magicleap/SuperGluePretrainedNetwork/blob/master/models/superglue.py)
 def log_sinkhorn_iterations(Z: torch.Tensor, log_mu: torch.Tensor, log_nu: torch.Tensor, iters: int) -> torch.Tensor:
     """ Perform Sinkhorn Normalization in Log-space for stability"""
@@ -117,3 +119,21 @@ class SALAD(nn.Module):
         ], dim=-1)
 
         return nn.functional.normalize(f, p=2, dim=-1)
+
+def print_nb_params(m):
+    model_parameters = filter(lambda p: p.requires_grad, m.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    print(f'Trainable parameters: {params/1e6:.3}M')
+
+
+def main():
+    x = torch.randn(1, 768, 16, 16), torch.randn(1, 768)
+    agg = SALAD()
+
+    print_nb_params(agg)
+    output = agg(x)
+    print(output)
+
+
+if __name__ == '__main__':
+    main()

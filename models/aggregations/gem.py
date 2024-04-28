@@ -88,6 +88,14 @@ class CAGeM(nn.Module):
         x = self.norm(x)
         return x
 
+class CLS(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        _, x = x
+        return x
+
 
 def print_nb_params(m):
     model_parameters = filter(lambda p: p.requires_grad, m.parameters())
@@ -96,8 +104,8 @@ def print_nb_params(m):
 
 
 def main():
-    x = torch.randn(1, 768, 16, 16), 1
-    agg = CAGeM(features_dim = 768, channels_num = 4)
+    x = torch.randn(1, 768, 16, 16), torch.randn(1, 768)
+    agg = CAGeM(768,3)
 
     print_nb_params(agg)
     output = agg(x)

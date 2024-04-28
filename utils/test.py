@@ -23,19 +23,13 @@ def test(args, eval_ds, model):
                                          batch_size=args.infer_batch_size, pin_memory=True)
         all_features = np.empty((len(eval_ds), args.features_dim), dtype="float32")
 
-        database_features_dir = os.path.join(args.datasets_folder, args.dataset_name, 'images/test', "database_features.npy")
-        if os.path.isfile(database_features_dir) == 1:
-            database_features = np.load(database_features_dir)
-        else: 
-            for inputs, indices in tqdm(database_dataloader, ncols=100):
-                features = model(inputs.to("cuda"))
-                features = features.cpu().numpy()
-                # if pca is not None:
-                #     features = pca.transform(features)
-                all_features[indices.numpy(), :] = features
+        for inputs, indices in tqdm(database_dataloader, ncols=100):
+            features = model(inputs.to("cuda"))
+            features = features.cpu().numpy()
+            # if pca is not None:
+            #     features = pca.transform(features)
+            all_features[indices.numpy(), :] = features
 
-            database_features = all_features[:eval_ds.database_num]
-            np.save(database_features_dir, database_features)
         
         logging.debug("Extracting queries features for evaluation/testing")
         queries_infer_batch_size = args.infer_batch_size
@@ -51,7 +45,7 @@ def test(args, eval_ds, model):
             all_features[indices.numpy(), :] = features
     
     queries_features = all_features[eval_ds.database_num:]
-    # database_features = all_features[:eval_ds.database_num]
+    database_features = all_features[:eval_ds.database_num]
     
     faiss_index = faiss.IndexFlatL2(args.features_dim)
     faiss_index.add(database_features)

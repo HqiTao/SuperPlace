@@ -46,7 +46,7 @@ def test(args, eval_ds, model):
             print(f"Principal Component {i+1}: Top contributing channels: {most_contributive_channels}")
             print(f"Contributions: {contributions[most_contributive_channels]}")
 
-        choice_dim = 1
+        choice_dim = 2
         pca_features[:, choice_dim] = (pca_features[:, choice_dim] - pca_features[:, choice_dim].min()) / \
                      (pca_features[:, choice_dim].max() - pca_features[:, choice_dim].min())
 

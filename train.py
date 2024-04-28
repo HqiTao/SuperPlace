@@ -59,6 +59,7 @@ if args.use_lora:
                     "9.attn.q", "9.atten.k", "9.attn.v", "9.attn.proj", "9.mlp.fc1", "9.mlp.fc2",
                     "10.attn.q", "10.atten.k", "10.attn.v", "10.attn.proj","10.mlp.fc1", "10.mlp.fc2",
                     "11.attn.q", "11.atten.k", "11.attn.v", "11.attn.proj", "11.mlp.fc1", "11.mlp.fc2",]
+    # lora_modules = ["q", "k", "v", "proj", "fc1", "fc2"]
     lora_config = LoraConfig(r=32, lora_alpha=64, use_dora= True, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
     model = get_peft_model(model, lora_config)
 

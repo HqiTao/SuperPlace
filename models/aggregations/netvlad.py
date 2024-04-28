@@ -60,7 +60,9 @@ class NetVLAD(nn.Module):
         if self.normalize_input:
             x = F.normalize(x, p=2, dim=1)  # Across descriptor dim
         x_flatten = x.view(N, D, -1)
+        print(x_flatten.shape) # N, D, H*W
         soft_assign = self.conv(x).view(N, self.clusters_num, -1)
+        print(soft_assign.shape) # N, D_cluster, H*W
         soft_assign = F.softmax(soft_assign, dim=1)
         vlad = torch.zeros([N, self.clusters_num, D], dtype=x_flatten.dtype, device=x_flatten.device)
         for D in range(self.clusters_num):  # Slower than non-looped, but lower memory usage
@@ -102,3 +104,21 @@ class NetVLAD(nn.Module):
         logging.debug(f"NetVLAD centroids shape: {kmeans.centroids.shape}")
         self.init_params(kmeans.centroids, descriptors)
         self = self.to("cuda")
+
+def print_nb_params(m):
+    model_parameters = filter(lambda p: p.requires_grad, m.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    print(f'Trainable parameters: {params/1e6:.3}M')
+
+
+def main():
+    x = torch.randn(32, 768, 16, 16), torch.randn(32, 768)
+    agg = NetVLAD(clusters_num=64, dim=768, normalize_input=False, work_with_tokens=True)
+
+    print_nb_params(agg)
+    output = agg(x)
+    print(output.shape)
+
+
+if __name__ == '__main__':
+    main()
