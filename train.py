@@ -55,12 +55,16 @@ if args.aggregation == "netvlad":
     train_ds.is_inference = False
 
 if args.use_lora:
-    lora_modules = ["8.attn.q", "8.atten.k", "8.attn.v", "8.attn.proj", "8.mlp.fc1", "8.mlp.fc2",
-                    "9.attn.q", "9.atten.k", "9.attn.v", "9.attn.proj", "9.mlp.fc1", "9.mlp.fc2",
-                    "10.attn.q", "10.atten.k", "10.attn.v", "10.attn.proj","10.mlp.fc1", "10.mlp.fc2",
-                    "11.attn.q", "11.atten.k", "11.attn.v", "11.attn.proj", "11.mlp.fc1", "11.mlp.fc2",]
-    # lora_modules = ["q", "k", "v", "proj", "fc1", "fc2"]
-    lora_config = LoraConfig(r=32, lora_alpha=64, use_dora= True, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
+
+    trainable_layers = dinov2_network.control_trainable_layer(args.trainable_layers, args.backbone)
+
+    lora_modules = []
+    for layer in trainable_layers:
+        lora_modules += [
+            f"{layer}.attn.q", f"{layer}.attn.k", f"{layer}.attn.v", f"{layer}.attn.proj",
+            f"{layer}.mlp.fc1", f"{layer}.mlp.fc2"]
+
+    lora_config = LoraConfig(r=64, lora_alpha=128, use_dora= False, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
     model = get_peft_model(model, lora_config)
 
 model = torch.nn.DataParallel(model)
@@ -85,7 +89,7 @@ else:
 
 
 if args.domain_awareness:
-    domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion)
+    domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, miner, criterion)
     sys.exit()
 
 #### Training loop

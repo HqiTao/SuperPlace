@@ -14,7 +14,7 @@ def normalize(data):
     max_val = max(data)
     return [(x - min_val) / (max_val - min_val) if max_val - min_val else 0 for x in data]
 
-def domain_awareness(args, model, train_dl, optimizer, scaler, scheduler, miner, criterion):
+def domain_awareness(args, model, train_dl, optimizer, scaler, miner, criterion):
 
     gradients = {}
     w_mul_g = {}

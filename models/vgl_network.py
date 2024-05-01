@@ -30,3 +30,8 @@ def get_aggregation(args):
         return aggregations.CAGeM(features_dim=dinov2_network.CHANNELS_NUM[args.backbone], channels_num = args.channels_num)
     elif args.aggregation == "cls":
         return aggregations.CLS()
+    elif args.aggregation == "mixedgem":
+        return aggregations.MixedGeM(num_channels = dinov2_network.CHANNELS_NUM[args.backbone], 
+                                     num_hiddens = None, 
+                                     num_clusters = 192, 
+                                     dim_clusters = 2)

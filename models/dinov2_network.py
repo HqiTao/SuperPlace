@@ -25,6 +25,16 @@ LAYERS_NUM = {
     "dinov2_vitg14": 40,
 }
 
+def control_trainable_layer(trainable_layers, backbone):
+    if trainable_layers == "all":
+        trainable_layers = list(range(LAYERS_NUM[backbone]))
+    elif trainable_layers == "frozen":
+        trainable_layers = []
+    else:
+        trainable_layers = [int(x.strip()) for x in trainable_layers.split(',')]
+    return trainable_layers
+
+
 class DINOv2(nn.Module):
 
     def __init__(self, backbone : str, trainable_layers="8, 9, 10, 11", norm_layer = True, return_token = True, num_register_tokens = 0):
@@ -49,12 +59,7 @@ class DINOv2(nn.Module):
         self.model.load_state_dict(model_state_dict, strict = False)
         util.split_and_assign_qkv_parameters(model = self.model, pretrained_dict = model_state_dict)
 
-        if trainable_layers == "all":
-            self.trainable_layers = list(range(LAYERS_NUM[backbone]))
-        elif trainable_layers == "frozen":
-            self.trainable_layers = []
-        else:
-            self.trainable_layers = [int(x.strip()) for x in trainable_layers.split(',')]
+        self.trainable_layers = control_trainable_layer(trainable_layers, backbone)
 
         for param in self.model.parameters():
             param.requires_grad = False
