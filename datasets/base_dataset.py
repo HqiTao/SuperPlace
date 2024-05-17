@@ -46,7 +46,8 @@ class BaseDataset(data.Dataset):
 
         # self.mean, self.std = self.compute_mean_and_variance()
 
-        self.transform = transforms.Compose([transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
+        self.transform = transforms.Compose([
+                                             transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
                                              transforms.ToTensor(),
                                             #  transforms.Normalize(mean=self.mean, std=self.std),])
                                              transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])

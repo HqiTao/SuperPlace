@@ -60,77 +60,91 @@ class CosGeM(nn.Module):
         x = self.norm2(x)
         return x
 
+class CBAM_CA(nn.Module):
+    def __init__(self, channel, reduction = 16):
+        super().__init__()
+        self.maxpool=nn.AdaptiveMaxPool2d(1)
+        self.avgpool=nn.AdaptiveAvgPool2d(1)
+        self.channel_attention = nn.Sequential(
+            nn.Conv2d(channel,channel//reduction,1,bias=False),
+            nn.ReLU(),
+            nn.Conv2d(channel//reduction,channel,1,bias=False))
+        self.sigmoid=nn.Sigmoid()
+    
+    def forward(self, x) :
+        max_result=self.maxpool(x)
+        avg_result=self.avgpool(x)
+        max_out=self.channel_attention(max_result)
+        avg_out=self.channel_attention(avg_result)
+        output=self.sigmoid(max_out+avg_out)
+        return output.flatten(1)
+
+class SE_CA(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super().__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.channel_attention = nn.Sequential(
+            nn.Linear(channel, channel // reduction, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channel // reduction, channel, bias=False),
+            nn.Sigmoid())
+    
+    def forward(self, x):
+        x=self.avg_pool(x)
+        x=self.channel_attention(x.flatten(1))
+        return x
+
+class GCA(nn.Module):
+    def __init__(self, num_channels, num_hiddens=3):
+        super().__init__()
+        self.gem = GeM()
+        self.channel_attention = nn.Sequential(
+            nn.Linear(num_channels, num_hiddens),
+            nn.GELU(),
+            nn.Linear(num_hiddens, num_channels),
+            nn.Sigmoid())
+    
+    def forward(self, x) :
+        x=self.gem(x)
+        x=self.channel_attention(x.flatten(1))
+        return x
 
 class MixedGeM(nn.Module):
-    def __init__(self, num_channels = 768, num_hiddens = None, num_clusters = None, dim_clusters = 1):
+    def __init__(self, num_channels = 768, num_hiddens = 3 , use_cls = False, pooling_method = "gem"):
         super().__init__()
 
         self.num_channels = num_channels
-        self.num_hiddens = num_channels // 2 if num_hiddens == None else num_hiddens
-        self.num_clusters = num_clusters
-        self.dim_clusters = dim_clusters
-        self.dim_features = self.num_clusters * self.dim_clusters * self.dim_clusters
+        self.use_cls = use_cls
 
-        # self.feat_cluster = nn.Sequential(
-        #     nn.Conv2d(self.num_channels, self.num_hiddens, 1),
-        #     nn.ReLU(),
-        #     nn.Conv2d(self.num_hiddens, self.num_clusters, 1)
-        # )
+        self.gem = GeM()
 
-        self.gem = GeM(k=self.dim_clusters)
-
-        self.feat_mlp = nn.Sequential(
-            nn.Linear(self.dim_features, self.dim_features),
+        if pooling_method == "gem":
+            self.channel_attention = GCA(self.num_channels, num_hiddens)
+        elif pooling_method == "avg":
+            self.channel_attention = SE_CA(channel = self.num_channels)
+        else:
+            self.channel_attention = CBAM_CA(channel = self.num_channels)
+            
+        self.feat_proj = nn.Sequential(
+            nn.Linear(self.num_channels, self.num_channels),
             L2Norm())
 
-        self.cls_mlp = nn.Sequential(
-            nn.Linear(self.num_channels, self.num_channels//2),
-            L2Norm())
+        if self.use_cls:
+            self.cls_proj = nn.Sequential(
+                nn.Linear(self.num_channels, self.num_channels//2),
+                L2Norm())
 
         self.norm = L2Norm()
-
-    def init_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                init.kaiming_normal_(m.weight, mode='fan_out')
-                if m.bias is not None:
-                    init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                init.normal_(m.weight, std=0.001)
-                if m.bias is not None:
-                    init.constant_(m.bias, 0)
         
     def forward(self, x):
         x_feat, x_cls = x
-
-        x_feat = self.gem(x_feat)
-        x_feat = self.feat_mlp(x_feat.flatten(1))
-        x_cls = self.cls_mlp(x_cls)
-        x_feat = self.norm(torch.cat([x_cls, x_feat], dim=-1))
-        return x_feat
-
-
-class CAGeM(nn.Module):
-    # Low-rank, GeM, and GELU
-    def __init__(self, num_channels, num_hiddens):
-        super().__init__()
-
-        self.channel_attention = nn.Sequential(
-            nn.Linear(num_channels, num_hiddens, bias = False),
-            nn.GELU(),
-            nn.Linear(num_hiddens, num_channels, bias = False),
-            nn.Sigmoid())
-
-        self.gem = GeM()
-        self.fc = nn.Linear(num_channels, num_channels)
-        self.norm = L2Norm()
-
-    def forward(self, x):
-        x_feat, x_cls = x
-        x_feat = self.gem(x_feat).flatten(1)
         x_atte = self.channel_attention(x_feat)
-        x_feat = self.fc(x_feat * x_atte)
-        x_feat = self.norm(x_feat)
+        x_feat = self.gem(x_feat).flatten(1)
+        x_feat = self.feat_proj(x_feat * x_atte)
+        if self.use_cls:
+            x_cls = self.cls_proj(x_cls)
+            x_feat = self.norm(torch.cat([x_cls, x_feat], dim=-1))
+
         return x_feat
 
 
@@ -151,7 +165,7 @@ def print_nb_params(m):
 
 def main():
     x = torch.randn(32, 768, 16, 16), torch.randn(32, 768)
-    agg = MixedGeM(num_channels = 768, num_hiddens = None, num_clusters = 192, dim_clusters = 2)
+    agg = MixedGeM(num_channels = 768, num_hiddens = 3)
 
     print_nb_params(agg)
     output = agg(x)

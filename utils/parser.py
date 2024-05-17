@@ -11,9 +11,11 @@ def parse_arguments():
                         help="low rank adaption")
     parser.add_argument("--use_extra_datasets", action="store_true",
                         help="extra datasets")
-    parser.add_argument("--channels_num", type=int, default=4,
+    parser.add_argument("--num_channels", type=int, default=3,
                         help="channel attention")
     # Training parameters
+    parser.add_argument("--use_amp16", action="store_true",
+                        help="use Automatic Mixed Precision")
     parser.add_argument("--train_batch_size", type=int, default=32,
                         help="Batch size for training.")
     parser.add_argument("--infer_batch_size", type=int, default=16,
@@ -25,7 +27,7 @@ def parse_arguments():
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
                         choices=["dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
-    parser.add_argument("--aggregation", type=str, default="cosgem", choices=["salad", "netvlad", "cosgem", "cagem", "cls", "mixedgem"])
+    parser.add_argument("--aggregation", type=str, default="cosgem", choices=["salad", "netvlad", "cosgem", "cls", "mixedgem"])
     parser.add_argument("--trainable_layers", type=str, default="8, 9, 10, 11",
                     help="Comma-separated list of layer indexes to be trained")
     parser.add_argument("--features_dim", type=int, default=768,

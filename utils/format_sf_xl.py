@@ -73,5 +73,12 @@ class DatasetFormatter:
                         shutil.copyfile(original_path, os.path.join(self.output_folder, base_name))
                     place_id += 1
 
-csv_generator = DatasetFormatter('/mnt/sda3/Projects/npr/datasets/sf_xl/small/train', '/mnt/sda3/Projects/npr/datasets/gsv_cities')
-csv_generator.to_gsv_format()
+
+def main():
+    csv_generator = DatasetFormatter('/mnt/sda3/Projects/npr/datasets/sf_xl/small/train',
+                                     '/mnt/sda3/Projects/npr/datasets/gsv_cities')
+    csv_generator.to_gsv_format()
+
+
+if __name__ == '__main__':
+    main()

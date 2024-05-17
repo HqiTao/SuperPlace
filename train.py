@@ -13,7 +13,6 @@ from utils import util, parser, commons, test, domain_awareness
 from models import vgl_network, dinov2_network
 from datasets import gsv_cities, base_dataset
 
-
 torch.backends.cudnn.benchmark = True  # Provides a speedup
 #### Initial setup: parser, logging...
 args = parser.parse_arguments()
@@ -55,16 +54,13 @@ if args.aggregation == "netvlad":
     train_ds.is_inference = False
 
 if args.use_lora:
-
     trainable_layers = dinov2_network.control_trainable_layer(args.trainable_layers, args.backbone)
-
     lora_modules = []
     for layer in trainable_layers:
         lora_modules += [
             f"{layer}.attn.q", f"{layer}.attn.k", f"{layer}.attn.v", f"{layer}.attn.proj",
             f"{layer}.mlp.fc1", f"{layer}.mlp.fc2"]
-
-    lora_config = LoraConfig(r=64, lora_alpha=128, use_dora= False, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
+    lora_config = LoraConfig(r=32, lora_alpha=64, use_dora= True, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
     model = get_peft_model(model, lora_config)
 
 model = torch.nn.DataParallel(model)
@@ -78,7 +74,8 @@ if not args.resume:
     scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.2, total_iters=4000)
 criterion = losses.MultiSimilarityLoss(alpha=1.0, beta=50, base=0.0, distance=distances.CosineSimilarity())
 miner = miners.MultiSimilarityMiner(epsilon=0.1, distance=distances.CosineSimilarity())
-scaler = torch.cuda.amp.GradScaler()
+if args.use_amp16:
+    scaler = torch.cuda.amp.GradScaler()
 
 #### Resume model, optimizer, and other training parameters
 if args.resume:
@@ -86,7 +83,6 @@ if args.resume:
     logging.info(f"Resuming from epoch {start_epoch_num} with best recall@1 {best_r1:.1f}")
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
-
 
 if args.domain_awareness:
     domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, miner, criterion)
@@ -108,15 +104,21 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
         
         optimizer.zero_grad()
 
-        with torch.cuda.amp.autocast():
-
+        if not args.use_amp16:
             features = model(images)
             miner_outputs = miner(features, labels)
             loss = criterion(features, labels, miner_outputs)
-
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+            loss.backward()
+            optimizer.step()
+        else:
+            with torch.cuda.amp.autocast():
+                features = model(images)
+                miner_outputs = miner(features, labels)
+                loss = criterion(features, labels, miner_outputs)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+            
         if not args.resume:
             scheduler.step()
 
