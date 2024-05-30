@@ -11,7 +11,7 @@ def parse_arguments():
                         help="low rank adaption")
     parser.add_argument("--use_extra_datasets", action="store_true",
                         help="extra datasets")
-    parser.add_argument("--num_channels", type=int, default=3,
+    parser.add_argument("--num_hiddens", type=int, default=3,
                         help="channel attention")
     # Training parameters
     parser.add_argument("--use_amp16", action="store_true",

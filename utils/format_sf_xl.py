@@ -40,7 +40,7 @@ class DatasetFormatter:
 
     def to_gsv_format(self):
             
-        indices = self.knn.radius_neighbors([[info['utm_east'], info['utm_north']] for info in self.dataset_info], radius=25, return_distance=False)
+        indices = self.knn.radius_neighbors([[info['utm_east'], info['utm_north']] for info in self.dataset_info], radius=10, return_distance=False)
         cluster_centers_indices = []
 
         with open(self.output_csv, mode='w', newline='') as file:

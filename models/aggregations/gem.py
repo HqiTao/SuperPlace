@@ -97,16 +97,19 @@ class SE_CA(nn.Module):
 class GCA(nn.Module):
     def __init__(self, num_channels, num_hiddens=3):
         super().__init__()
-        self.gem = GeM()
+
         self.channel_attention = nn.Sequential(
+            GeM(),
+            nn.Flatten(),
             nn.Linear(num_channels, num_hiddens),
             nn.GELU(),
             nn.Linear(num_hiddens, num_channels),
             nn.Sigmoid())
     
     def forward(self, x) :
-        x=self.gem(x)
-        x=self.channel_attention(x.flatten(1))
+
+        x=self.channel_attention(x)
+        
         return x
 
 class MixedGeM(nn.Module):
@@ -131,7 +134,7 @@ class MixedGeM(nn.Module):
 
         if self.use_cls:
             self.cls_proj = nn.Sequential(
-                nn.Linear(self.num_channels, self.num_channels//2),
+                nn.Linear(self.num_channels, self.num_channels),
                 L2Norm())
 
         self.norm = L2Norm()

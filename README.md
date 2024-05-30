@@ -10,23 +10,10 @@ Cross-domain Switch-aware Re-parameterization for Visual Geo-Localization
 * add a classification layer for domain recognition
 * add auto-switch feature in testing
 
-## TODO
-* MDR Loss + Triplet Loss
-* KD Loss + Fast(Light, Mobile) ViT
-
-# Re-produce
-* change the pre-trained model path (dinov2_network.py, L37)
-
-
-## Experiments
-
-* DINO-L + SALAD + last 4 layers
-* DINO-L + SALAD + Important layers
-* DINO-L + SALAD + q, k, v, proj (LORA) value:
-* DINO-L + SALAD + q, k, v, proj (DORA) value: 32
-* DINO-L + SALAD + Important q, k, v, proj (DORA) value: 0.6, 0.5, 0.45, 0.55
-
-## Experiments -extra datasets (SF-XL)
-
-* DINO-B + SALAD + last 4 layers
-* DINO-B + GeM + last 4 layers
+# Experiments                                       Pitts   Nordland     MSLS     Amstertime
+0. SALAD                                            92.4    89.7                  60.8
+1. use sf-xl dataset, no mixup features,            92.0    82.0(82.9)            56.4
+2. 322 fine-tune based on 1                         92.4    
+3. use sf-xl dataset, mixup features                92.0
+4. 322 fine-tune based on 3                         92.3
+5. 322 fine-tune based on 1(MSLS Val)               92.4    81.9         91.4     56.5

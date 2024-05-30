@@ -10,9 +10,6 @@ import torchvision.transforms as transforms
 IMAGENET_MEAN_STD = {'mean': [0.485, 0.456, 0.406],
                      'std': [0.229, 0.224, 0.225]}
 
-GSVCITIES_MEAN_STD = {'mean': [0.45711839, 0.45853956, 0.43732006],
-                     'std': [0.22118008, 0.21826246, 0.23868325]}
-
 TRAIN_CITIES = ['Bangkok', 'BuenosAires', 'LosAngeles', 'MexicoCity', 'OSL',
                 'Rome', 'Barcelona', 'Chicago', 'Madrid', 'Miami', 'Phoenix',
                 'TRT', 'Boston', 'Lisbon', 'Medellin', 'Minneapolis',
@@ -34,7 +31,6 @@ class GSVCitiesDataset(Dataset):
         self.transform = transforms.Compose([transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
                                     transforms.RandAugment(num_ops=3, interpolation=transforms.InterpolationMode.BILINEAR),
                                     transforms.ToTensor(),
-                                    # transforms.Normalize(mean=GSVCITIES_MEAN_STD['mean'], std=GSVCITIES_MEAN_STD['std']),])
                                     transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
 
         # generate the dataframe contraining images metadata

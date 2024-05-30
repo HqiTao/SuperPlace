@@ -11,40 +11,23 @@ class DatasetFormatter:
     def __init__(self, dataset_folder, output_folder):
         self.dataset_folder = dataset_folder
         self.database_folder = os.path.join(self.dataset_folder, "database")
-        self.queries_folder = os.path.join(self.dataset_folder, "queries_test")
-        self.output_folder = os.path.join(output_folder, "Images", "Pittsburgh")
-        self.output_csv = os.path.join(output_folder, "Dataframes", "Pittsburgh.csv")
-        self.inliers_threshold = 350
-        self.queries_record = []
-        self.database_record = []
+        self.inliers_threshold = 100
         self.load_filenames()
         self.fit_database_knn()
-        self.fit_queries_knn()
         self.extractor = SuperPoint(max_num_keypoints=2048).eval().cuda()  # load the extractor
         self.matcher = LightGlue(features='superpoint').eval().cuda()  # load the matcher
 
         if not os.path.exists(self.output_folder):
             os.makedirs(self.output_folder)
     
-
     def load_filenames(self):
         self.database_paths = sorted(glob(os.path.join(self.database_folder, "**", "*.jpg"), recursive=True))
-        self.queries_paths = sorted(glob(os.path.join(self.queries_folder, "**", "*.jpg"),  recursive=True))
         self.database_info = [self.parse_filename(path, class_name = "database") for path in self.database_paths]
-        self.queries_info = [self.parse_filename(path) for path in self.queries_paths]
-
 
     def fit_database_knn(self):
         database_utms = np.array([(info['utm_east'], info['utm_north']) for info in self.database_info]).astype(float)
         self.knn_database = NearestNeighbors(n_jobs=-1)
         self.knn_database.fit(database_utms)
-
-
-    def fit_queries_knn(self):
-        queries_utms = np.array([(info['utm_east'], info['utm_north']) for info in self.queries_info]).astype(float)
-        self.knn_queries = NearestNeighbors(n_jobs=-1)
-        self.knn_queries.fit(queries_utms)
-
 
     def parse_filename(self, path, class_name = "queries"):
         parts = path.split("@")
@@ -97,7 +80,7 @@ class DatasetFormatter:
 
         sorted_matches = sorted(matches_sum.items(), key=lambda x: x[1], reverse=True)
 
-        for sub_index, num_inliers in sorted_matches[:3]:
+        for sub_index, num_inliers in sorted_matches[:10]:
             if (num_inliers/num_queries)> self.inliers_threshold:
                 database_record.append(sub_index)
                 original_path = self.database_paths[sub_index]
@@ -127,8 +110,8 @@ class DatasetFormatter:
             for sub_index in index:
                 if self.queries_info[sub_index]['utm_east'] != self.queries_info[query_id]['utm_east'] and \
                     sub_index not in queries_record:
-                    candidate_image_path = self.queries_paths[sub_index]
-                    num_inliers = self.image_matching(query_image_path, candidate_image_path)
+                    database_image_path = self.queries_paths[sub_index]
+                    num_inliers = self.image_matching(query_image_path, database_image_path)
                     if sub_index in matches_sum:
                         matches_sum[sub_index] += num_inliers
                     else:
@@ -136,8 +119,8 @@ class DatasetFormatter:
 
         sorted_matches = sorted(matches_sum.items(), key=lambda x: x[1], reverse=True)
 
-        for sub_index, num_inliers in sorted_matches[:3]:
-            if num_inliers > self.inliers_threshold:
+        for sub_index, num_inliers in sorted_matches[:10]:
+            if (num_inliers/2) > self.inliers_threshold:
                 queries_index.append(sub_index)
 
         for sub_index in queries_index:
@@ -159,11 +142,12 @@ class DatasetFormatter:
             shutil.copyfile(original_path, os.path.join(self.output_folder, base_name))
 
 
+
     def to_gsv_format(self):
         
         # cluster queries by utm
-        queries_indices = self.knn_queries.radius_neighbors([[info['utm_east'], info['utm_north']] for info in self.queries_info], radius=25, return_distance=False)
-        database_indices = self.knn_database.radius_neighbors([[info['utm_east'], info['utm_north']] for info in self.queries_info], radius=25, return_distance=False)
+        queries_indices = self.knn_queries.radius_neighbors([[info['utm_east'], info['utm_north']] for info in self.queries_info], radius=10, return_distance=False)
+        database_indices = self.knn_database.radius_neighbors([[info['utm_east'], info['utm_north']] for info in self.queries_info], radius=10, return_distance=False)
 
         with open(self.output_csv, mode='w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=['place_id', 'year', 'month', 'northdeg', 'city_id', 'lat', 'lon', 'panoid'])
@@ -171,24 +155,23 @@ class DatasetFormatter:
 
             place_id = 0
             refine_queries_indices = []
-
+            queries_record = []
             for i, queries_path in enumerate(tqdm(self.queries_paths)):
                 query_info = self.queries_info[i]
-                if i not in self.queries_record and query_info['cameraid'] in ['00', '03', '06', '09'] and len(database_indices[i]) != 0:
-                    pose_query = [i]
-                    gap_query = []
+                if i not in queries_record and query_info['cameraid'] in ['00', '03', '06', '09']:
+                    pose_query = [i, i+12]
+                    gap_query = [i+1, i+2, i+13, i+14]
                     # queries as database
-                    self.process_queries(queries_indices[i], place_id, pose_query, writer, self.queries_record)
-                    self.queries_record.extend(pose_query)
-                    for i in pose_query:
-                        gap_query.extend([i+1, i+2, i+12, i+13, i+14])
-                    self.queries_record.extend(gap_query)
+                    self.process_queries(queries_indices[i], place_id, pose_query, writer, queries_record)
+                    queries_record.extend(pose_query)
+                    queries_record.extend(gap_query)
                     refine_queries_indices.append(pose_query)
                     place_id += 1
 
+            database_record = []
             for i, index in enumerate(tqdm(refine_queries_indices)): # i is place_id
                 if len(database_indices[index[0]]) != 0:
-                    self.process_database(database_indices[index[0]], i, index, writer, self.database_record)
+                    self.process_database(database_indices[index[0]], i, index, writer, database_record)
 
 
 csv_generator = DatasetFormatter('/media/hello/data1/binux/datasets/pitts30k/images/train', 

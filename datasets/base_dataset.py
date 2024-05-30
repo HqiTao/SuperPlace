@@ -44,12 +44,9 @@ class BaseDataset(data.Dataset):
         self.database_num = len(self.database_paths)
         self.queries_num = len(self.queries_paths)
 
-        # self.mean, self.std = self.compute_mean_and_variance()
-
         self.transform = transforms.Compose([
-                                             transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
+                                            #  transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
                                              transforms.ToTensor(),
-                                            #  transforms.Normalize(mean=self.mean, std=self.std),])
                                              transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
     
     def __getitem__(self, index):
@@ -66,23 +63,3 @@ class BaseDataset(data.Dataset):
     
     def get_positives(self):
         return self.soft_positives_per_query
-    
-    def compute_mean_and_variance(self):
-        sum_image = None
-        sum_square_image = None
-
-        for image_path in tqdm(self.database_paths):
-            with Image.open(image_path) as img:
-                img_resized = img.resize((224, 224))
-                img_array = np.array(img_resized) / 255.0
-                if sum_image is None:
-                    sum_image = np.zeros_like(img_array)
-                    sum_square_image = np.zeros_like(img_array)
-                
-                sum_image += img_array
-                sum_square_image += img_array ** 2
-
-        mean = np.mean(sum_image / self.database_num, axis=(0, 1))
-        std = np.sqrt(np.mean(sum_square_image / self.database_num - (sum_image / self.database_num) ** 2, axis=(0, 1)))
-
-        return mean.tolist(), std.tolist()

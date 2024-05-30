@@ -40,9 +40,6 @@ train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=a
 val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
 
-test_ds = base_dataset.BaseDataset(args, "test")
-logging.info(f"Test set: {test_ds}")
-
 #### Initialize model
 model = vgl_network.VGLNet(args)
 model = model.to("cuda")
@@ -81,6 +78,7 @@ if args.use_amp16:
 if args.resume:
     model, _, best_r1, start_epoch_num, not_improved_num = util.resume_train(args, model, strict=False)
     logging.info(f"Resuming from epoch {start_epoch_num} with best recall@1 {best_r1:.1f}")
+    best_r1 = 0 # maybe change the val dataset, maybe change the size, anyway, best_r1 should be computed from 0
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
@@ -148,17 +146,23 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     util.save_checkpoint(args, {"epoch_num": epoch_num, "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(), "recalls": recalls, "best_r1": best_r1,
         "not_improved_num": not_improved_num
-    }, is_best, filename="last_model.pth")
+    }, is_best, filename=f"{epoch_num}_model.pth")
 
     if args.use_lora:
         model.module.save_pretrained(os.path.join(args.save_dir, "lora"))
     
-    if not_improved_num == args.patience:
+    if not_improved_num == args.patience and not args.resume:
         logging.info(f"Performance did not improve for {not_improved_num} epochs. Stop training.")
         break
 
 logging.info(f"Best R@1: {best_r1:.1f}")
 logging.info(f"Trained for {epoch_num+1:02d} epochs, in total in {str(datetime.now() - start_time)[:-7]}")
+
+# update test
+args.dataset_name = "pitts30k"
+args.resize = [322,322]
+test_ds = base_dataset.BaseDataset(args, "test")
+logging.info(f"Test set: {test_ds}")
 
 recalls, recalls_str = test.test(args, test_ds, model)
 logging.info(f"Recalls on {test_ds}: {recalls_str}")

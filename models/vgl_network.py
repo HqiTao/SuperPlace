@@ -17,11 +17,11 @@ class VGLNet(nn.Module):
         
     def forward(self, x):
 
-        # if not self.training:
-        #     b, c, h, w = x.shape
-        #     h = round(h / 14) * 14
-        #     w = round(w / 14) * 14
-        #     x = transforms.functional.resize(x, [h, w], antialias=True)
+        if not self.training:
+            b, c, h, w = x.shape
+            h = round(h / 14) * 14
+            w = round(w / 14) * 14
+            x = transforms.functional.resize(x, [h, w], antialias=True)
 
         x = self.backbone(x)
         x = self.aggregation(x)
@@ -39,5 +39,5 @@ def get_aggregation(args):
         return aggregations.CLS()
     elif args.aggregation == "mixedgem":
         return aggregations.MixedGeM(num_channels = dinov2_network.CHANNELS_NUM[args.backbone], 
-                                     num_hiddens = dinov2_network.CHANNELS_NUM[args.backbone]//2,
+                                     num_hiddens = args.num_hiddens,
                                      use_cls = False)

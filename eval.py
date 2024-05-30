@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 import torch
 
-from utils import parser, commons, util, test, test_super, test_vis
+from utils import parser, commons, util, test, test_vis, test_embodied
 from models import vgl_network, dinov2_network
 from datasets import base_dataset
 from peft import PeftModel
@@ -42,11 +42,18 @@ test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
-recalls, recalls_str = test.test(args, test_ds, model)
-logging.info(f"Recalls on {test_ds}: {recalls_str}")
+# recalls, recalls_str = test.test(args, test_ds, model)
+# logging.info(f"Recalls on {test_ds}: {recalls_str}")
 
-logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
+# logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
 
 ######################################### Vis on DEMO SET ########################################
 
 # test_vis.test(args, test_ds, model)
+
+######################################### EMBODIED TEST on TEST SET #########################################
+recalls, recalls_str = test_embodied.test(args, test_ds, model)
+logging.info(f"Recalls on {test_ds}: {recalls_str}")
+
+logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
+
