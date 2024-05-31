@@ -44,8 +44,11 @@ class BaseDataset(data.Dataset):
         self.database_num = len(self.database_paths)
         self.queries_num = len(self.queries_paths)
 
-        self.transform = transforms.Compose([
-                                            #  transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR),
+        if args.is_training:
+            self.transform_resize = transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR)
+        else:
+            self.transform_resize = None
+        self.transform = transforms.Compose([self.transform_resize,
                                              transforms.ToTensor(),
                                              transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
     

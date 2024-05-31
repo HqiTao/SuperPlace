@@ -17,6 +17,21 @@ class VGLNet(nn.Module):
         
     def forward(self, x):
 
+        x = self.backbone(x)
+        x = self.aggregation(x)
+        return x
+    
+class VGLNet_Test(nn.Module):
+
+    def __init__(self, args):
+        super().__init__()
+        self.backbone = dinov2_network.DINOv2(backbone=args.backbone,
+                               trainable_layers=args.trainable_layers)
+        
+        self.aggregation = get_aggregation(args)
+        
+    def forward(self, x):
+
         if not self.training:
             b, c, h, w = x.shape
             h = round(h / 14) * 14
@@ -38,6 +53,7 @@ def get_aggregation(args):
     elif args.aggregation == "cls":
         return aggregations.CLS()
     elif args.aggregation == "mixedgem":
-        return aggregations.MixedGeM(num_channels = dinov2_network.CHANNELS_NUM[args.backbone], 
+        return aggregations.MixedGeM(num_channels = dinov2_network.CHANNELS_NUM[args.backbone],
+                                     fc_output_dim=args.features_dim,
                                      num_hiddens = args.num_hiddens,
                                      use_cls = False)

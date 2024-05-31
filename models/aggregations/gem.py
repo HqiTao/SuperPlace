@@ -113,10 +113,11 @@ class GCA(nn.Module):
         return x
 
 class MixedGeM(nn.Module):
-    def __init__(self, num_channels = 768, num_hiddens = 3 , use_cls = False, pooling_method = "gem"):
+    def __init__(self, num_channels = 768, fc_output_dim = 768, num_hiddens = 3 , use_cls = False, pooling_method = "gem"):
         super().__init__()
 
         self.num_channels = num_channels
+        self.fc_output_dim = fc_output_dim
         self.use_cls = use_cls
 
         self.gem = GeM()
@@ -129,7 +130,7 @@ class MixedGeM(nn.Module):
             self.channel_attention = CBAM_CA(channel = self.num_channels)
             
         self.feat_proj = nn.Sequential(
-            nn.Linear(self.num_channels, self.num_channels),
+            nn.Linear(self.num_channels, self.fc_output_dim),
             L2Norm())
 
         if self.use_cls:

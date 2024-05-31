@@ -16,7 +16,7 @@ commons.make_deterministic(args.seed)
 logging.info(f"Arguments: {args}")
 logging.info(f"The outputs are being saved in {args.save_dir}")
 
-model = vgl_network.VGLNet(args)
+model = vgl_network.VGLNet_Test(args)
 # model = dinov2_network.DINOv2(backbone=args.backbone)
 model = model.to("cuda")
 if args.aggregation == "netvlad":
