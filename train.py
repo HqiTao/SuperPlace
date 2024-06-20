@@ -31,12 +31,13 @@ if args.domain_awareness:
     train_ds = gsv_cities.GSVCitiesDataset(args)
 else:
     if args.use_extra_datasets:
-        train_ds = gsv_cities.GSVCitiesDataset(args, cities=(gsv_cities.EXTRA_DATASETS + gsv_cities.TRAIN_CITIES))
+        train_ds = gsv_cities.GSVCitiesDataset(args, cities=(gsv_cities.EXTRA_DATASETS))
     else:
         train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
 
 train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
+# args.resize = [224, 224]
 val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
 
@@ -63,7 +64,6 @@ if args.use_lora:
 model = torch.nn.DataParallel(model)
     
 util.print_trainable_parameters(model)
-util.print_trainable_layers(model)
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
@@ -79,6 +79,10 @@ if args.resume:
     model, _, best_r1, start_epoch_num, not_improved_num = util.resume_train(args, model, strict=False)
     logging.info(f"Resuming from epoch {start_epoch_num} with best recall@1 {best_r1:.1f}")
     best_r1 = 0 # maybe change the val dataset, maybe change the size, anyway, best_r1 should be computed from 0
+    if not args.use_extra_datasets:
+        recalls, recalls_str = test.test(args, val_ds, model)
+        logging.info(f"New Recalls on val set {val_ds}: {recalls_str}")
+        best_r1 = recalls[0]
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
@@ -146,7 +150,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     util.save_checkpoint(args, {"epoch_num": epoch_num, "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(), "recalls": recalls, "best_r1": best_r1,
         "not_improved_num": not_improved_num
-    }, is_best, filename=f"{epoch_num}_model.pth")
+    }, is_best, filename=f"last_model.pth")
 
     if args.use_lora:
         model.module.save_pretrained(os.path.join(args.save_dir, "lora"))
@@ -160,10 +164,16 @@ logging.info(f"Trained for {epoch_num+1:02d} epochs, in total in {str(datetime.n
 
 # update test
 args.dataset_name = "pitts30k"
-args.resize = [322,322]
+args.resize_test_imgs = False
+args.resume = f"{args.save_dir}/best_model.pth"
+
+model = vgl_network.VGLNet_Test(args)
+model = model.to("cuda")
+model = util.resume_model(args, model)
+model = torch.nn.DataParallel(model)
+
 test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
-
 recalls, recalls_str = test.test(args, test_ds, model)
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
 

@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -113,38 +112,59 @@ class GCA(nn.Module):
         return x
 
 class MixedGeM(nn.Module):
-    def __init__(self, num_channels = 768, fc_output_dim = 768, num_hiddens = 3 , use_cls = False, pooling_method = "gem"):
+    def __init__(
+        self,
+        num_channels=768,
+        fc_output_dim=768,
+        num_hiddens=3,
+        use_cls=False,
+        use_ca=False,
+        pooling_method="gem",
+    ):
         super().__init__()
 
-        self.num_channels = num_channels
-        self.fc_output_dim = fc_output_dim
         self.use_cls = use_cls
+        self.use_ca = use_ca
+
+        self.num_channels = num_channels
+        self.cls_channels = self.num_channels//3
+        self.fc_output_dim = fc_output_dim if not self.use_cls else fc_output_dim - self.cls_channels
+
 
         self.gem = GeM()
 
-        if pooling_method == "gem":
-            self.channel_attention = GCA(self.num_channels, num_hiddens)
-        elif pooling_method == "avg":
-            self.channel_attention = SE_CA(channel = self.num_channels)
-        else:
-            self.channel_attention = CBAM_CA(channel = self.num_channels)
-            
+        if self.use_ca:
+            if pooling_method == "gem":
+                self.channel_attention = GCA(self.num_channels, num_hiddens)
+            elif pooling_method == "avg":
+                self.channel_attention = SE_CA(channel=self.num_channels)
+            elif pooling_method == "cba":
+                self.channel_attention = CBAM_CA(channel=self.num_channels)
+
         self.feat_proj = nn.Sequential(
-            nn.Linear(self.num_channels, self.fc_output_dim),
-            L2Norm())
+            nn.Linear(self.num_channels, self.fc_output_dim), L2Norm()
+        )
 
         if self.use_cls:
             self.cls_proj = nn.Sequential(
-                nn.Linear(self.num_channels, self.num_channels),
-                L2Norm())
+                nn.Linear(self.num_channels, self.cls_channels), L2Norm()
+            )
 
         self.norm = L2Norm()
-        
+
     def forward(self, x):
         x_feat, x_cls = x
-        x_atte = self.channel_attention(x_feat)
+
+        if self.use_ca:
+            x_atte = self.channel_attention(x_feat)
+
         x_feat = self.gem(x_feat).flatten(1)
-        x_feat = self.feat_proj(x_feat * x_atte)
+
+        if self.use_ca:
+            x_feat = self.feat_proj(x_feat * x_atte)
+        else:
+            x_feat = self.feat_proj(x_feat)
+
         if self.use_cls:
             x_cls = self.cls_proj(x_cls)
             x_feat = self.norm(torch.cat([x_cls, x_feat], dim=-1))
@@ -164,17 +184,17 @@ class CLS(nn.Module):
 def print_nb_params(m):
     model_parameters = filter(lambda p: p.requires_grad, m.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
-    print(f'Trainable parameters: {params/1e6:.3}M')
+    print(f"Trainable parameters: {params/1e6:.3}M")
 
 
 def main():
     x = torch.randn(32, 768, 16, 16), torch.randn(32, 768)
-    agg = MixedGeM(num_channels = 768, num_hiddens = 3)
+    agg = MixedGeM(num_channels=768, num_hiddens=3)
 
     print_nb_params(agg)
     output = agg(x)
     print(output.shape)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

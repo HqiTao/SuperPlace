@@ -5,7 +5,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Cross-domain Switch-aware Re-parameterization for Visual Geo-Loclization",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # Ablation parameters
-    parser.add_argument("--is_training", action="store_true",
+    parser.add_argument("--resize_test_imgs", action="store_true",
                         help="traing or testing")
     parser.add_argument("--domain_awareness", action="store_true",
                         help="domain awareness")
@@ -15,16 +15,22 @@ def parse_arguments():
                         help="extra datasets")
     parser.add_argument("--num_hiddens", type=int, default=3,
                         help="channel attention")
+    parser.add_argument("--ca_method", type=str, default="gem",
+                        choices=["gem", "avg", "cba"], help="_")
+    parser.add_argument("--use_cls", action="store_true",
+                        help="")
+    parser.add_argument("--use_ca", action="store_true",
+                        help="")
     # Training parameters
     parser.add_argument("--use_amp16", action="store_true",
                         help="use Automatic Mixed Precision")
     parser.add_argument("--train_batch_size", type=int, default=32,
                         help="Batch size for training.")
-    parser.add_argument("--infer_batch_size", type=int, default=16,
+    parser.add_argument("--infer_batch_size", type=int, default=64,
                         help="Batch size for inference.")
     parser.add_argument("--epochs_num", type=int, default=4,
                         help="number of epochs to train")
-    parser.add_argument("--patience", type=int, default=3)
+    parser.add_argument("--patience", type=int, default=10)
     parser.add_argument("--lr", type=float, default=0.00006, help="_")
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
@@ -47,8 +53,8 @@ def parse_arguments():
     parser.add_argument('--recall_values', type=int, default=[1, 5, 10, 100], nargs="+",
                         help="Recalls to be computed, such as R@1.")
     # Paths parameters
-    # parser.add_argument("--datasets_folder", type=str, default="/media/hello/data1/binux/datasets", help="Path with all datasets")
-    parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/Projects/npr/datasets", help="Path with all datasets")
+    parser.add_argument("--datasets_folder", type=str, default="/media/hello/data1/binux/datasets", help="Path with all datasets")
+    # parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/Projects/npr/datasets", help="Path with all datasets")
     parser.add_argument("--dataset_name", type=str, default="pitts30k", help="Relative path of the dataset")
     parser.add_argument("--queries_name", type=str, default=None,
                         help="Path with images to be queried")

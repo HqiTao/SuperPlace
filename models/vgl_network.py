@@ -53,7 +53,11 @@ def get_aggregation(args):
     elif args.aggregation == "cls":
         return aggregations.CLS()
     elif args.aggregation == "mixedgem":
-        return aggregations.MixedGeM(num_channels = dinov2_network.CHANNELS_NUM[args.backbone],
-                                     fc_output_dim=args.features_dim,
-                                     num_hiddens = args.num_hiddens,
-                                     use_cls = False)
+        return aggregations.MixedGeM(
+            num_channels=dinov2_network.CHANNELS_NUM[args.backbone],
+            fc_output_dim=args.features_dim,
+            num_hiddens=args.num_hiddens,
+            use_cls=args.use_cls,
+            use_ca=args.use_ca,
+            pooling_method=args.ca_method,
+        )

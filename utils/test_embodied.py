@@ -10,13 +10,76 @@ from utils import visualizations
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics.pairwise import cosine_similarity
  
-def weighted_average_feature(features, weights=[0.1, 0.8, 0.1]):
-    weighted_feature = np.zeros_like(features[0])
-    for feature, weight in zip(features, weights):
-        weighted_feature += weight * feature
-    return weighted_feature
 
+# Pitts: 1, 4, 10
+# MSLS:  5, 5, 10
+CORRECT_NUMS = 7
+
+def weighted_feature(query_feature, database_features, query_idx):
+
+    embodied_features = [np.zeros_like(db[0]) for db in database_features]
+
+    weights_sum = None
+
+    for i in range(1, CORRECT_NUMS + 1):
+
+        cosine_similarities = []
+        for db in database_features:
+            if i < len(db):
+                cosine_similarity = np.dot(db[i], query_feature) / (np.linalg.norm(db[i]) * np.linalg.norm(query_feature))
+            else:
+                cosine_similarity = 0
+            cosine_similarities.append(cosine_similarity)
+
+        cos_distances = 1 - np.array(cosine_similarities)
+        weights = cos_distances / sum(cos_distances)
+
+        for j, db in enumerate(database_features):
+            if i < len(db):
+                embodied_features[j] += weights[j] * db[i]
+
+        if weights_sum is None:
+            weights_sum = weights
+        else:
+            weights_sum += weights
+
+
+    embodied_features = [embodied_features[i] + (1-weights_sum[i]) * db[0] for i, db in enumerate(database_features)]
+
+    return embodied_features
+
+def concat_feature(query_feature, database_features, query_idx):
+    concatenated_features = []
+
+    for db in database_features:
+        concatenated_feature = np.concatenate([feature.flatten() for feature in db], axis=0)
+        
+        if len(db) < CORRECT_NUMS + 1:
+            additional_features = np.tile(db[-1].flatten(), (CORRECT_NUMS + 1 - len(db), 1)).flatten()
+            concatenated_feature = np.concatenate((concatenated_feature, additional_features))
+        
+        concatenated_features.append(concatenated_feature)
+
+    return np.vstack(concatenated_features)
+
+
+def get_absolute_positives(similarity_matrix, soft_positives_per_database, k=CORRECT_NUMS+1):
+    absolute_positives_per_database = []
+
+    for i, soft_positives in enumerate(soft_positives_per_database):
+        if len(soft_positives) == 0:
+            absolute_positives_per_database.append([])
+            continue
+
+        soft_similarities = similarity_matrix[i, soft_positives]
+
+        top_k_indices = np.argsort(soft_similarities)[-k:][::-1]
+        absolute_positives = [soft_positives[idx] for idx in top_k_indices]
+        absolute_positives_per_database.append(absolute_positives)
+
+    return absolute_positives_per_database
 
 def test(args, eval_ds, model):
     """Compute features of the given dataset and compute the recalls."""
@@ -64,21 +127,7 @@ def test(args, eval_ds, model):
                 all_features[indices.numpy(), :] = features
             
             queries_features = all_features[eval_ds.database_num:]
-            np.save(queries_features_dir, queries_features)
-
-    
-    # queries_features = all_features[eval_ds.database_num:]
-    # database_features = all_features[:eval_ds.database_num]
-
-    # similarity_matrix = np.dot(queries_features, database_features.T)
-
-    # plt.imshow(similarity_matrix, cmap='hot', interpolation='nearest')
-    # plt.colorbar()
-    # plt.title('Self-similarity Matrix')
-    # plt.xlabel('Sample Index')
-    # plt.ylabel('Sample Index')
-    # plt.savefig(f"ss.png")
-        
+            np.save(queries_features_dir, queries_features)        
     
     faiss_index = faiss.IndexFlatL2(args.features_dim)
     faiss_index.add(database_features)
@@ -87,98 +136,42 @@ def test(args, eval_ds, model):
     logging.debug("Calculating recalls")
     distances, predictions = faiss_index.search(queries_features, max(args.recall_values))
 
+    soft_positives_per_database = eval_ds.get_positives_database()
+    similarity_matrix = cosine_similarity(database_features)
+    absolute_positives_per_database = get_absolute_positives(similarity_matrix, soft_positives_per_database)
+
     ''' 
     L2(x - (y1 + y2 + y3) / 3)
     '''
-    # rank_n = 100
-    # new_predictions = []
-    # mixup_database_features = database_features.copy()
+    rank_n = 10
+    new_predictions = []
 
-    # for idx in tqdm(range(mixup_database_features.shape[0])):
-    #     if idx > 0 and idx < eval_ds.database_num - 1:
-    #         mixup_database_features[idx] = weighted_average_feature([database_features[idx-1],
-    #                                                                  database_features[idx],
-    #                                                                  database_features[idx+1]])
+    for query_idx in range(predictions.shape[0]):
+        prediction = predictions[query_idx]
+        query_feature = queries_features[query_idx]
 
-    # for query_idx in range(predictions.shape[0]):
-    #     prediction = predictions[query_idx]
-    #     query_feature = queries_features[query_idx]
+        embodied_candidates = [absolute_positives_per_database[pre] for pre in prediction[:rank_n]]
 
-    #     distances = np.linalg.norm(mixup_database_features[prediction[:rank_n]] - query_feature, axis=1)
-    #     ranked_indices = np.argsort(distances)
+        embodied_features = weighted_feature(query_feature, [database_features[cand] for cand in embodied_candidates], query_idx)
+        cosine_similarities = (np.dot(embodied_features, query_feature) / (
+                        np.linalg.norm(embodied_features, axis=1) * np.linalg.norm(query_feature)))
+        distances = 1-cosine_similarities
 
-    #     ranked_prediction = prediction[:rank_n][ranked_indices]
+        # repeated_query_feature = np.tile(query_feature.flatten(), (1, CORRECT_NUMS + 1)).flatten()
+        # embodied_features = concat_feature(query_feature, [database_features[cand] for cand in embodied_candidates], query_idx)
+        # cosine_similarities = (np.dot(embodied_features, repeated_query_feature) / (
+        #                 np.linalg.norm(embodied_features, axis=1) * np.linalg.norm(repeated_query_feature)))
+        # distances = 1-cosine_similarities
 
-    #     unranked_predictions = prediction[rank_n:]
-    #     new_prediction = np.concatenate((ranked_prediction, unranked_predictions))
+        ranked_indices = np.argsort(distances)
+        ranked_prediction = prediction[:rank_n][ranked_indices]
 
-    #     new_predictions.append(new_prediction)
+        unranked_predictions = prediction[rank_n:]
+        new_prediction = np.concatenate((ranked_prediction, unranked_predictions))
 
-    # predictions = np.array(new_predictions)
+        new_predictions.append(new_prediction)
 
-    ''' 
-    L2(max (y1 + y2 + y3) - y)
-    '''
-    # rank_n = 100
-    # new_predictions = []
-    # mixup_database_features = database_features.copy()
-
-    # for idx in tqdm(range(mixup_database_features.shape[0])):
-    #     if idx > 0 and idx < eval_ds.database_num - 1:
-    #         mixup_database_features[idx] = weighted_average_feature([database_features[idx-1],
-    #                                                                  database_features[idx],
-    #                                                                  database_features[idx+1]])
-
-    # for query_idx in range(predictions.shape[0]):
-    #     prediction = predictions[query_idx]
-    #     query_feature = queries_features[query_idx]
-    #     mixup_query_feature = np.max(mixup_database_features[prediction[:5]], axis=0)
-
-    #     distances_mixup_database = np.linalg.norm(mixup_database_features[prediction[:rank_n]] - query_feature, axis=1)
-    #     distances_mixup_query = np.linalg.norm(database_features[prediction[:rank_n]] - mixup_query_feature, axis=1)
-    #     ranked_indices = np.argsort(distances_mixup_query)
-
-    #     ranked_prediction = prediction[:rank_n][ranked_indices]
-
-    #     unranked_predictions = prediction[rank_n:]
-    #     new_prediction = np.concatenate((ranked_prediction, unranked_predictions))
-
-    #     new_predictions.append(new_prediction)
-
-    # predictions = np.array(new_predictions)
-
-    '''
-    [L2(x - y1) + L2(x - y2) + L2(x - y3)] / 3
-    '''
-
-    # rank_n = 100
-    # weights = np.array([0.2, 0.6, 0.2])
-    # new_predictions = []
-
-    # for query_idx in range(predictions.shape[0]):
-    #     prediction = predictions[query_idx]
-    #     query_feature = queries_features[query_idx]
-
-    #     distances = np.zeros(rank_n)
-    #     for idx in range(prediction.shape[0]):
-    #         database_idx = prediction[idx]
-    #         if database_idx > 0 and database_idx < eval_ds.database_num - 1:
-    #             distance = np.linalg.norm(database_features[database_idx-1: database_idx+2] - query_feature, axis=1)
-    #             distance = np.sum(distance * weights)
-    #         else:
-    #             distance = np.linalg.norm(database_features[database_idx] - query_feature)
-    #         distances[idx] = distance
-    #     ranked_indices = np.argsort(distances)
-
-    #     ranked_prediction = prediction[:rank_n][ranked_indices]
-
-    #     unranked_predictions = prediction[rank_n:]
-    #     new_prediction = np.concatenate((ranked_prediction, unranked_predictions))
-
-    #     new_predictions.append(new_prediction)
-
-    # predictions = np.array(new_predictions)
-
+    predictions = np.array(new_predictions)
 
     #### For each query, check if the predictions are correct
     positives_per_query = eval_ds.get_positives()

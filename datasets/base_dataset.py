@@ -39,18 +39,20 @@ class BaseDataset(data.Dataset):
                                                              radius=args.val_positive_dist_threshold,
                                                              return_distance=False)
         
+        self.soft_positives_per_database = knn.radius_neighbors(self.database_utms,
+                                                             radius=5,
+                                                             return_distance=False)
+        
         self.images_paths = list(self.database_paths) + list(self.queries_paths)
         
         self.database_num = len(self.database_paths)
         self.queries_num = len(self.queries_paths)
 
-        if args.is_training:
-            self.transform_resize = transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR)
-        else:
-            self.transform_resize = None
-        self.transform = transforms.Compose([self.transform_resize,
-                                             transforms.ToTensor(),
-                                             transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std']),])
+        self.transform = transforms.Compose([
+            transforms.Resize(args.resize, interpolation=transforms.InterpolationMode.BILINEAR) if args.resize_test_imgs else lambda x: x,
+            transforms.ToTensor(),
+            transforms.Normalize(mean=IMAGENET_MEAN_STD['mean'], std=IMAGENET_MEAN_STD['std'])
+        ])
     
     def __getitem__(self, index):
         img = Image.open(self.images_paths[index]).convert("RGB")
@@ -66,3 +68,6 @@ class BaseDataset(data.Dataset):
     
     def get_positives(self):
         return self.soft_positives_per_query
+    
+    def get_positives_database(self):
+        return self.soft_positives_per_database
