@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, SubsetRandomSampler
 class NetVLAD(nn.Module):
     """NetVLAD layer implementation"""
 
-    def __init__(self, clusters_num=64, dim=128, normalize_input=True, work_with_tokens=False):
+    def __init__(self, clusters_num=32, dim=128, normalize_input=True, work_with_tokens=False):
         """
         Args:
             clusters_num : int
@@ -38,6 +38,10 @@ class NetVLAD(nn.Module):
         self.conv = nn.Conv2d(dim, clusters_num, kernel_size=(1, 1), bias=False)
         self.centroids = nn.Parameter(torch.rand(clusters_num, dim))
 
+        if self.work_with_tokens:
+            self.feat_proj = nn.Linear(self.dim, 256)
+            self.cls_proj = nn.Linear(self.dim, 256)
+
     def init_params(self, centroids, descriptors):
         centroids_assign = centroids / np.linalg.norm(centroids, axis=1, keepdims=True)
         dots = np.dot(centroids_assign, descriptors.T)
@@ -53,16 +57,12 @@ class NetVLAD(nn.Module):
         self.conv.bias = None
 
     def forward(self, x):
-        if self.work_with_tokens:
-            # x = x.permute(0, 2, 1)
-            x, _ = x
+        x, cls_token = x
         N, D, H, W = x.shape[:]
         if self.normalize_input:
             x = F.normalize(x, p=2, dim=1)  # Across descriptor dim
         x_flatten = x.view(N, D, -1)
-        print(x_flatten.shape) # N, D, H*W
         soft_assign = self.conv(x).view(N, self.clusters_num, -1)
-        print(soft_assign.shape) # N, D_cluster, H*W
         soft_assign = F.softmax(soft_assign, dim=1)
         vlad = torch.zeros([N, self.clusters_num, D], dtype=x_flatten.dtype, device=x_flatten.device)
         for D in range(self.clusters_num):  # Slower than non-looped, but lower memory usage
@@ -70,9 +70,17 @@ class NetVLAD(nn.Module):
                     self.centroids[D:D+1, :].expand(x_flatten.size(-1), -1, -1).permute(1, 2, 0).unsqueeze(0)
             residual = residual * soft_assign[:,D:D+1,:].unsqueeze(2)
             vlad[:,D:D+1,:] = residual.sum(dim=-1)
+        # print(vlad.shape)
         vlad = F.normalize(vlad, p=2, dim=2)  # intra-normalization
-        vlad = vlad.view(N, -1)  # Flatten
-        vlad = F.normalize(vlad, p=2, dim=1)  # L2 normalize
+
+        if self.work_with_tokens:
+            cls_token_proj = F.normalize(self.cls_proj(cls_token), p=2, dim=-1)
+            vlad_proj = F.normalize(self.feat_proj(vlad).view(N, -1), p=2, dim=-1) # input: torch.Size([32, 32, 768]) out_put: torch.Size([32, 8192])
+            vlad = torch.cat([cls_token_proj, vlad_proj], dim=-1)
+        else:
+            vlad = vlad.view(N, -1)  # Flatten
+            vlad = F.normalize(vlad, p=2, dim=1)  # L2 normalize
+
         return vlad
 
     def initialize_netvlad_layer(self, args, cluster_ds, backbone):
@@ -87,8 +95,6 @@ class NetVLAD(nn.Module):
             logging.debug("Extracting features to initialize NetVLAD layer")
             descriptors = np.zeros(shape=(descriptors_num, self.dim), dtype=np.float32)
             for iteration, (inputs, _) in enumerate(tqdm(random_dl, ncols=100)):
-                BS, ch, h, w = inputs.shape
-                inputs = inputs.view(BS, ch, h, w)
                 inputs = inputs.to("cuda")
                 outputs = backbone(inputs)
                 norm_outputs = F.normalize(outputs[0], p=2, dim=1)
@@ -105,6 +111,7 @@ class NetVLAD(nn.Module):
         self.init_params(kmeans.centroids, descriptors)
         self = self.to("cuda")
 
+
 def print_nb_params(m):
     model_parameters = filter(lambda p: p.requires_grad, m.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
@@ -113,7 +120,7 @@ def print_nb_params(m):
 
 def main():
     x = torch.randn(32, 768, 16, 16), torch.randn(32, 768)
-    agg = NetVLAD(clusters_num=64, dim=768, normalize_input=False, work_with_tokens=True)
+    agg = NetVLAD(clusters_num=32, dim=768, normalize_input=True, work_with_tokens=True)
 
     print_nb_params(agg)
     output = agg(x)

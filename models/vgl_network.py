@@ -47,7 +47,7 @@ def get_aggregation(args):
     if args.aggregation == "salad":
         return aggregations.SALAD(num_channels = dinov2_network.CHANNELS_NUM[args.backbone])
     elif args.aggregation == "netvlad":
-        return aggregations.NetVLAD(dim=dinov2_network.CHANNELS_NUM[args.backbone], normalize_input=False, work_with_tokens=True)
+        return aggregations.NetVLAD(dim=dinov2_network.CHANNELS_NUM[args.backbone], work_with_tokens=args.use_cls)
     elif args.aggregation == "cosgem":
         return aggregations.CosGeM(features_dim=dinov2_network.CHANNELS_NUM[args.backbone], fc_output_dim=args.features_dim)
     elif args.aggregation == "cls":
@@ -55,7 +55,7 @@ def get_aggregation(args):
     elif args.aggregation == "mixedgem":
         return aggregations.MixedGeM(
             num_channels=dinov2_network.CHANNELS_NUM[args.backbone],
-            fc_output_dim=args.features_dim,
+            fc_output_dim=dinov2_network.CHANNELS_NUM[args.backbone],
             num_hiddens=args.num_hiddens,
             use_cls=args.use_cls,
             use_ca=args.use_ca,

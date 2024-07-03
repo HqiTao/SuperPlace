@@ -132,7 +132,7 @@ def main():
 
     print_nb_params(agg)
     output = agg(x)
-    print(output)
+    print(output.shape)
 
 
 if __name__ == '__main__':

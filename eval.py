@@ -6,7 +6,6 @@ import torch
 from utils import parser, commons, util, test, test_vis, test_embodied
 from models import vgl_network, dinov2_network
 from datasets import base_dataset
-from peft import PeftModel
 
 args = parser.parse_arguments()
 start_time = datetime.now()
@@ -17,17 +16,16 @@ logging.info(f"Arguments: {args}")
 logging.info(f"The outputs are being saved in {args.save_dir}")
 
 model = vgl_network.VGLNet_Test(args)
-# model = dinov2_network.DINOv2(backbone=args.backbone)
+# model = dinov2_network.DINOv2(backbone=args.backbone) # used for PCA Vis
 model = model.to("cuda")
 if args.aggregation == "netvlad":
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+    if args.use_cls:
+        args.features_dim = 8448
+        
 if args.resume != None:
-    if args.use_lora:
-        logging.info(f"Resuming lora model from {args.resume}")
-        model = PeftModel.from_pretrained(model, args.resume)
-    else:
-        logging.info(f"Resuming model from {args.resume}")
-        model = util.resume_model(args, model)
+    logging.info(f"Resuming model from {args.resume}")
+    model = util.resume_model(args, model)
     
 model = torch.nn.DataParallel(model)
 
@@ -42,14 +40,14 @@ test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
-# recalls, recalls_str = test.test(args, test_ds, model)
+recalls, recalls_str = test.test(args, test_ds, model)
 
 ######################################### Vis on DEMO SET ########################################
 
 # test_vis.test(args, test_ds, model)
 
 ######################################### EMBODIED TEST on TEST SET #########################################
-recalls, recalls_str = test_embodied.test(args, test_ds, model)
+# recalls, recalls_str = test_embodied.test(args, test_ds, model)
 
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
 

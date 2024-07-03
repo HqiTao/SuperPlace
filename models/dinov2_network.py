@@ -37,22 +37,22 @@ def control_trainable_layer(trainable_layers, backbone):
 
 class DINOv2(nn.Module):
 
-    def __init__(self, backbone : str, trainable_layers="8, 9, 10, 11", norm_layer = True, return_token = True, num_register_tokens = 0):
+    def __init__(self, backbone : str, trainable_layers="8, 9, 10, 11", norm_layer = True, return_token = True, num_register_tokens = 4):
         super().__init__()
         self.model = BACKBONE[backbone](patch_size = 14, 
                                         img_size = 518, 
                                         init_values = 1, 
                                         block_chunks = 0, 
                                         num_register_tokens = num_register_tokens, 
-                                        # interpolate_antialias = True, 
-                                        # interpolate_offset = 0.0
+                                        interpolate_antialias = True, 
+                                        interpolate_offset = 0.0
                                         )
         self.channels_num = CHANNELS_NUM[backbone]
         self.norm_layer = norm_layer
         self.return_token = return_token
         self.num_register_tokens = num_register_tokens
 
-        pretrained_model_path = f"/media/hello/data1/binux/checkpoints/{backbone}_pretrain.pth"
+        pretrained_model_path = f"/media/hello/data1/binux/checkpoints/{backbone}_reg4_pretrain.pth"
         # pretrained_model_path = f"/home/ubuntu/.cache/torch/hub/checkpoints/{backbone}_pretrain.pth"
 
         model_state_dict = torch.load(pretrained_model_path)

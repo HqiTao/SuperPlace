@@ -127,8 +127,8 @@ class MixedGeM(nn.Module):
         self.use_ca = use_ca
 
         self.num_channels = num_channels
-        self.cls_channels = self.num_channels//3
-        self.fc_output_dim = fc_output_dim if not self.use_cls else fc_output_dim - self.cls_channels
+        self.fc_output_dim = fc_output_dim
+        self.cls_channels = self.fc_output_dim
 
 
         self.gem = GeM()

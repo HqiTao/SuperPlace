@@ -160,3 +160,7 @@ cython_debug/
 #.idea/
 
 logs
+
+msls_challenge.txt
+msls_challenge.zip
+pca*

@@ -15,7 +15,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Pitts: 1, 4, 10
 # MSLS:  5, 5, 10
-CORRECT_NUMS = 7
+CORRECT_NUMS = 3
 
 def weighted_feature(query_feature, database_features, query_idx):
 
@@ -136,42 +136,64 @@ def test(args, eval_ds, model):
     logging.debug("Calculating recalls")
     distances, predictions = faiss_index.search(queries_features, max(args.recall_values))
 
-    soft_positives_per_database = eval_ds.get_positives_database()
-    similarity_matrix = cosine_similarity(database_features)
-    absolute_positives_per_database = get_absolute_positives(similarity_matrix, soft_positives_per_database)
+    # soft_positives_per_database = eval_ds.get_positives_database()
+    # similarity_matrix = cosine_similarity(database_features)
+    # absolute_positives_per_database = get_absolute_positives(similarity_matrix, soft_positives_per_database)
 
-    ''' 
-    L2(x - (y1 + y2 + y3) / 3)
-    '''
-    rank_n = 10
-    new_predictions = []
+    # ''' 
+    # L2(x - (y1 + y2 + y3) / 3)
+    # '''
+    # rank_n = 10
+    # new_predictions = []
 
-    for query_idx in range(predictions.shape[0]):
-        prediction = predictions[query_idx]
-        query_feature = queries_features[query_idx]
+    # for query_idx in range(predictions.shape[0]):
+    #     prediction = predictions[query_idx]
+    #     query_feature = queries_features[query_idx]
 
-        embodied_candidates = [absolute_positives_per_database[pre] for pre in prediction[:rank_n]]
+    #     embodied_candidates = [absolute_positives_per_database[pre] for pre in prediction[:rank_n]]
 
-        embodied_features = weighted_feature(query_feature, [database_features[cand] for cand in embodied_candidates], query_idx)
-        cosine_similarities = (np.dot(embodied_features, query_feature) / (
-                        np.linalg.norm(embodied_features, axis=1) * np.linalg.norm(query_feature)))
-        distances = 1-cosine_similarities
+    #     embodied_features = weighted_feature(query_feature, [database_features[cand] for cand in embodied_candidates], query_idx)
+    #     cosine_similarities = (np.dot(embodied_features, query_feature) / (
+    #                     np.linalg.norm(embodied_features, axis=1) * np.linalg.norm(query_feature)))
+    #     distances = 1-cosine_similarities
 
-        # repeated_query_feature = np.tile(query_feature.flatten(), (1, CORRECT_NUMS + 1)).flatten()
-        # embodied_features = concat_feature(query_feature, [database_features[cand] for cand in embodied_candidates], query_idx)
-        # cosine_similarities = (np.dot(embodied_features, repeated_query_feature) / (
-        #                 np.linalg.norm(embodied_features, axis=1) * np.linalg.norm(repeated_query_feature)))
-        # distances = 1-cosine_similarities
+    #     # repeated_query_feature = np.tile(query_feature.flatten(), (1, CORRECT_NUMS + 1)).flatten()
+    #     # embodied_features = concat_feature(query_feature, [database_features[cand] for cand in embodied_candidates], query_idx)
+    #     # cosine_similarities = (np.dot(embodied_features, repeated_query_feature) / (
+    #     #                 np.linalg.norm(embodied_features, axis=1) * np.linalg.norm(repeated_query_feature)))
+    #     # distances = 1-cosine_similarities
 
-        ranked_indices = np.argsort(distances)
-        ranked_prediction = prediction[:rank_n][ranked_indices]
+    #     ranked_indices = np.argsort(distances)
+    #     ranked_prediction = prediction[:rank_n][ranked_indices]
 
-        unranked_predictions = prediction[rank_n:]
-        new_prediction = np.concatenate((ranked_prediction, unranked_predictions))
+    #     unranked_predictions = prediction[rank_n:]
+    #     new_prediction = np.concatenate((ranked_prediction, unranked_predictions))
 
-        new_predictions.append(new_prediction)
+    #     new_predictions.append(new_prediction)
 
-    predictions = np.array(new_predictions)
+    # predictions = np.array(new_predictions)
+
+    if args.dataset_name == "msls_challenge":
+        fp = open("msls_challenge.txt", "w")
+        for query in range(eval_ds.queries_num):
+            query_path = eval_ds.queries_paths[query]
+            fp.write(query_path.split("@")[-1][:-4]+' ')
+            for i in range(20):
+                pred_path = eval_ds.database_paths[predictions[query,i]]
+                fp.write(pred_path.split("@")[-1][:-4]+' ')
+            fp.write("\n")
+        fp.write("\n")
+
+    elif args.dataset_name == "tokyo247":
+        fp = open("tokyo247.txt", "w")
+        for query in range(eval_ds.queries_num):
+            query_path = eval_ds.queries_paths[query]
+            fp.write(query_path+' ')
+            for i in range(5):
+                pred_path = eval_ds.database_paths[predictions[query,i]]
+                fp.write(pred_path+' ')
+            fp.write("\n")
+        fp.write("\n")
 
     #### For each query, check if the predictions are correct
     positives_per_query = eval_ds.get_positives()

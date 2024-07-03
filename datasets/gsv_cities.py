@@ -11,11 +11,11 @@ IMAGENET_MEAN_STD = {'mean': [0.485, 0.456, 0.406],
                      'std': [0.229, 0.224, 0.225]}
 
 # GSV-Cities
-# TRAIN_CITIES = ['Bangkok', 'BuenosAires', 'LosAngeles', 'MexicoCity', 'OSL',
-#                 'Rome', 'Barcelona', 'Chicago', 'Madrid', 'Miami', 'Phoenix',
-#                 'TRT', 'Boston', 'Lisbon', 'Medellin', 'Minneapolis',
-#                 'PRG', 'WashingtonDC', 'Brussels', 'London',
-#                 'Melbourne', 'Osaka', 'PRS',]
+TRAIN_CITIES = ['Bangkok', 'BuenosAires', 'LosAngeles', 'MexicoCity', 'OSL',
+                'Rome', 'Barcelona', 'Chicago', 'Madrid', 'Miami', 'Phoenix',
+                'TRT', 'Boston', 'Lisbon', 'Medellin', 'Minneapolis',
+                'PRG', 'WashingtonDC', 'Brussels', 'London',
+                'Melbourne', 'Osaka', 'PRS',]
 
 EXTRA_DATASETS_MSLS = ['MSLS0austin', 'MSLS0bangkok', 'MSLS0berlin', 'MSLS0boston', 'MSLS0budapest', 'MSLS0helsinki', 'MSLS0melbourne', 
                'MSLS0moscow', 'MSLS0ottawa', 'MSLS0paris', 'MSLS0phoenix', 'MSLS0saopaulo', 'MSLS0tokyo', 'MSLS0toronto', 
@@ -68,15 +68,12 @@ EXTRA_DATASETS_MSLS = ['MSLS0austin', 'MSLS0bangkok', 'MSLS0berlin', 'MSLS0bosto
                'MSLS9austin', 'MSLS9bangkok', 'MSLS9berlin', 'MSLS9boston', 'MSLS9budapest', 'MSLS9helsinki', 'MSLS9melbourne', 'MSLS9moscow', 'MSLS9ottawa', 
                'MSLS9paris', 'MSLS9phoenix', 'MSLS9saopaulo', 'MSLS9tokyo', 'MSLS9toronto', 'MSLS9trondheim']
 
-EXTRA_DATASETS_SF = ["SanFranciscan"]
 
-EXTRA_DATASETS_PITTS = ['PittsburghA','PittsburghB','PittsburghC','PittsburghD',]
+EXTRA_DATASETS_SF = ["SFXL0", "SFXL1", "SFXL2"]
 
-EXTRA_DATASETS = EXTRA_DATASETS_MSLS + EXTRA_DATASETS_SF + EXTRA_DATASETS_PITTS
+EXTRA_DATASETS_PITTS = ['Pittsburgh2A','Pittsburgh2B','Pittsburgh2C','Pittsburgh2D',]
 
-
-# All
-# EXTRA_DATASETS = ["Pittsburgh", "SanFranciscan"]
+EXTRA_DATASETS = EXTRA_DATASETS_SF + EXTRA_DATASETS_MSLS + EXTRA_DATASETS_PITTS
 
 class GSVCitiesDataset(Dataset):
     def __init__(self, args, cities=['London', 'Boston'], img_per_place=4, min_img_per_place=4):

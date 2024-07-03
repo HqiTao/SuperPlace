@@ -7,9 +7,8 @@ from datetime import datetime
 import torch
 from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
-from peft import LoraConfig, get_peft_model
 
-from utils import util, parser, commons, test, domain_awareness
+from utils import util, parser, commons, test
 from models import vgl_network, dinov2_network
 from datasets import gsv_cities, base_dataset
 
@@ -27,17 +26,13 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 #### Creation of Datasets
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
-if args.domain_awareness:
-    train_ds = gsv_cities.GSVCitiesDataset(args)
+if args.use_extra_datasets:
+    train_ds = gsv_cities.GSVCitiesDataset(args, cities=(gsv_cities.EXTRA_DATASETS))
 else:
-    if args.use_extra_datasets:
-        train_ds = gsv_cities.GSVCitiesDataset(args, cities=(gsv_cities.EXTRA_DATASETS))
-    else:
-        train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
+    train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
 
 train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
-# args.resize = [224, 224]
 val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
 
@@ -47,19 +42,14 @@ model = model.to("cuda")
 
 if args.aggregation == "netvlad":
     train_ds.is_inference = True
-    model.aggregation.initialize_netvlad_layer(args, train_ds, model.backbone)
+    if not args.resume:
+        cluster_ds = base_dataset.BaseDataset(args, "train")
+        model.aggregation.initialize_netvlad_layer(args, cluster_ds, model.backbone)
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+    if args.use_cls:
+        args.features_dim = 8448
     train_ds.is_inference = False
 
-if args.use_lora:
-    trainable_layers = dinov2_network.control_trainable_layer(args.trainable_layers, args.backbone)
-    lora_modules = []
-    for layer in trainable_layers:
-        lora_modules += [
-            f"{layer}.attn.q", f"{layer}.attn.k", f"{layer}.attn.v", f"{layer}.attn.proj",
-            f"{layer}.mlp.fc1", f"{layer}.mlp.fc2"]
-    lora_config = LoraConfig(r=32, lora_alpha=64, use_dora= True, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
-    model = get_peft_model(model, lora_config)
 
 model = torch.nn.DataParallel(model)
     
@@ -86,9 +76,6 @@ if args.resume:
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
-if args.domain_awareness:
-    domain_awareness.domain_awareness(args, model, train_dl, optimizer, scaler, miner, criterion)
-    sys.exit()
 
 #### Training loop
 for epoch_num in range(start_epoch_num, args.epochs_num):
@@ -152,9 +139,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
         "not_improved_num": not_improved_num
     }, is_best, filename=f"last_model.pth")
 
-    if args.use_lora:
-        model.module.save_pretrained(os.path.join(args.save_dir, "lora"))
-    
+
     if not_improved_num == args.patience and not args.resume:
         logging.info(f"Performance did not improve for {not_improved_num} epochs. Stop training.")
         break
