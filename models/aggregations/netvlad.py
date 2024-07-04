@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, SubsetRandomSampler
 class NetVLAD(nn.Module):
     """NetVLAD layer implementation"""
 
-    def __init__(self, clusters_num=32, dim=128, normalize_input=True, work_with_tokens=False):
+    def __init__(self, clusters_num=32, dim=128, normalize_input=True, work_with_tokens=False, linear_dim = 256):
         """
         Args:
             clusters_num : int
@@ -32,6 +32,7 @@ class NetVLAD(nn.Module):
         self.alpha = 0
         self.normalize_input = normalize_input
         self.work_with_tokens = work_with_tokens
+        self.linear_dim = linear_dim
         # if work_with_tokens:
         #     self.conv = nn.Conv1d(dim, clusters_num, kernel_size=1, bias=False)
         # else:
@@ -39,8 +40,8 @@ class NetVLAD(nn.Module):
         self.centroids = nn.Parameter(torch.rand(clusters_num, dim))
 
         if self.work_with_tokens:
-            self.feat_proj = nn.Linear(self.dim, 256)
-            self.cls_proj = nn.Linear(self.dim, 256)
+            self.feat_proj = nn.Linear(self.dim, self.linear_dim)
+            self.cls_proj = nn.Linear(self.dim, self.linear_dim)
 
     def init_params(self, centroids, descriptors):
         centroids_assign = centroids / np.linalg.norm(centroids, axis=1, keepdims=True)

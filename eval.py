@@ -7,6 +7,8 @@ from utils import parser, commons, util, test, test_vis, test_embodied
 from models import vgl_network, dinov2_network
 from datasets import base_dataset
 
+from peft import PeftModel
+
 args = parser.parse_arguments()
 start_time = datetime.now()
 args.save_dir = os.path.join("logs", args.save_dir, args.backbone + "_" + args.aggregation, args.dataset_name, start_time.strftime('%Y-%m-%d_%H-%M-%S'))
@@ -21,11 +23,15 @@ model = model.to("cuda")
 if args.aggregation == "netvlad":
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
     if args.use_cls:
-        args.features_dim = 8448
+        args.features_dim = (args.clusters + 1) * args.linear_dim
         
 if args.resume != None:
-    logging.info(f"Resuming model from {args.resume}")
-    model = util.resume_model(args, model)
+    if args.use_lora:
+        logging.info(f"Resuming lora model from {args.resume}")
+        model = PeftModel.from_pretrained(model, args.resume)
+    else:
+        logging.info(f"Resuming model from {args.resume}")
+        model = util.resume_model(args, model)
     
 model = torch.nn.DataParallel(model)
 

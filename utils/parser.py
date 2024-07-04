@@ -7,8 +7,6 @@ def parse_arguments():
     # Ablation parameters
     parser.add_argument("--resize_test_imgs", action="store_true",
                         help="traing or testing")
-    parser.add_argument("--domain_awareness", action="store_true",
-                        help="domain awareness")
     parser.add_argument("--use_lora", action="store_true",
                         help="low rank adaption")
     parser.add_argument("--use_extra_datasets", action="store_true",
@@ -21,6 +19,8 @@ def parse_arguments():
                         help="")
     parser.add_argument("--use_ca", action="store_true",
                         help="")
+    parser.add_argument("--linear_dim", type=int, default=256,
+                    help="linear_dim")
     # Training parameters
     parser.add_argument("--use_amp16", action="store_true",
                         help="use Automatic Mixed Precision")

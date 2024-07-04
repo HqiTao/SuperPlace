@@ -7,6 +7,7 @@ from datetime import datetime
 import torch
 from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
+from peft import LoraConfig, get_peft_model
 
 from utils import util, parser, commons, test
 from models import vgl_network, dinov2_network
@@ -33,6 +34,7 @@ else:
 
 train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
+args.resize = [448, 448]
 val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
 
@@ -43,12 +45,23 @@ model = model.to("cuda")
 if args.aggregation == "netvlad":
     train_ds.is_inference = True
     if not args.resume:
+        args.dataset_name = "pitts30k"
         cluster_ds = base_dataset.BaseDataset(args, "train")
         model.aggregation.initialize_netvlad_layer(args, cluster_ds, model.backbone)
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
     if args.use_cls:
-        args.features_dim = 8448
+        args.features_dim = (args.clusters + 1) * args.linear_dim
     train_ds.is_inference = False
+
+if args.use_lora:
+    trainable_layers = dinov2_network.control_trainable_layer(args.trainable_layers, args.backbone)
+    lora_modules = []
+    for layer in trainable_layers:
+        lora_modules += [
+            f"{layer}.attn.q", f"{layer}.attn.k", f"{layer}.attn.v", f"{layer}.attn.proj",
+            f"{layer}.mlp.fc1", f"{layer}.mlp.fc2"]
+    lora_config = LoraConfig(r=32, lora_alpha=64, use_dora= True, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
+    model = get_peft_model(model, lora_config)
 
 
 model = torch.nn.DataParallel(model)
@@ -138,6 +151,10 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
         "optimizer_state_dict": optimizer.state_dict(), "recalls": recalls, "best_r1": best_r1,
         "not_improved_num": not_improved_num
     }, is_best, filename=f"last_model.pth")
+
+    if args.use_lora:
+        model.module.save_pretrained(os.path.join(args.save_dir, "lora"))
+
 
 
     if not_improved_num == args.patience and not args.resume:
