@@ -52,8 +52,8 @@ def get_aggregation(args):
         return aggregations.CosGeM(features_dim=dinov2_network.CHANNELS_NUM[args.backbone], fc_output_dim=args.features_dim)
     elif args.aggregation == "cls":
         return aggregations.CLS()
-    elif args.aggregation == "mixedgem":
-        return aggregations.MixedGeM(
+    elif args.aggregation == "g2m":
+        return aggregations.G2M(
             num_channels=dinov2_network.CHANNELS_NUM[args.backbone],
             fc_output_dim=dinov2_network.CHANNELS_NUM[args.backbone],
             num_hiddens=args.num_hiddens,

@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, random
 import logging
 import numpy as np
 from tqdm import tqdm
@@ -28,6 +28,9 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
 if args.use_extra_datasets:
+    random_datasets = gsv_cities.EXTRA_DATASETS.copy()
+    random.shuffle(random_datasets)
+    # train_ds = gsv_cities.GSVCitiesDataset(args, cities=(random_datasets))
     train_ds = gsv_cities.GSVCitiesDataset(args, cities=(gsv_cities.EXTRA_DATASETS))
 else:
     train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
@@ -43,7 +46,6 @@ model = vgl_network.VGLNet(args)
 model = model.to("cuda")
 
 if args.aggregation == "netvlad":
-    train_ds.is_inference = True
     if not args.resume:
         args.dataset_name = "pitts30k"
         cluster_ds = base_dataset.BaseDataset(args, "train")
@@ -51,16 +53,16 @@ if args.aggregation == "netvlad":
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
     if args.use_cls:
         args.features_dim = (args.clusters + 1) * args.linear_dim
-    train_ds.is_inference = False
 
 if args.use_lora:
+    # model, _, best_r1, start_epoch_num, not_improved_num = util.resume_train(args, model, strict=False)
     trainable_layers = dinov2_network.control_trainable_layer(args.trainable_layers, args.backbone)
     lora_modules = []
     for layer in trainable_layers:
         lora_modules += [
             f"{layer}.attn.q", f"{layer}.attn.k", f"{layer}.attn.v", f"{layer}.attn.proj",
             f"{layer}.mlp.fc1", f"{layer}.mlp.fc2"]
-    lora_config = LoraConfig(r=32, lora_alpha=64, use_dora= True, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
+    lora_config = LoraConfig(r=64, lora_alpha=128, use_dora= False, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
     model = get_peft_model(model, lora_config)
 
 

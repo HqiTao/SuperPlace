@@ -60,7 +60,7 @@ class CosGeM(nn.Module):
         return x
 
 class CBAM_CA(nn.Module):
-    def __init__(self, channel, reduction = 16):
+    def __init__(self, channel, reduction = 12):
         super().__init__()
         self.maxpool=nn.AdaptiveMaxPool2d(1)
         self.avgpool=nn.AdaptiveAvgPool2d(1)
@@ -79,7 +79,7 @@ class CBAM_CA(nn.Module):
         return output.flatten(1)
 
 class SE_CA(nn.Module):
-    def __init__(self, channel, reduction=16):
+    def __init__(self, channel, reduction=12):
         super().__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.channel_attention = nn.Sequential(
@@ -101,7 +101,7 @@ class GCA(nn.Module):
             GeM(),
             nn.Flatten(),
             nn.Linear(num_channels, num_hiddens),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(num_hiddens, num_channels),
             nn.Sigmoid())
     
@@ -111,7 +111,7 @@ class GCA(nn.Module):
         
         return x
 
-class MixedGeM(nn.Module):
+class G2M(nn.Module):
     def __init__(
         self,
         num_channels=768,
