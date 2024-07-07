@@ -65,7 +65,7 @@ def test(args, eval_ds, model):
                 break
     # Divide by the number of queries*100, so the recalls are in percentages
     recalls = recalls / eval_ds.queries_num * 100
-    recalls_str = ", ".join([f"R@{val}: {rec:.1f}" for val, rec in zip(args.recall_values, recalls)])
+    recalls_str = ", ".join([f"R@{val}: {rec:.2f}" for val, rec in zip(args.recall_values, recalls)])
 
     # Save visualizations of predictions
     if args.num_preds_to_save != 0:

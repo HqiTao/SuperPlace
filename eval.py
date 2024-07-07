@@ -23,7 +23,7 @@ model = model.to("cuda")
 if args.aggregation == "netvlad":
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
     if args.use_cls:
-        args.features_dim = (args.clusters + 1) * args.linear_dim
+        args.features_dim = args.clusters * args.linear_dim + 256
         
 if args.resume != None:
     if args.use_lora:

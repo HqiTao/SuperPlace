@@ -41,7 +41,7 @@ class NetVLAD(nn.Module):
 
         if self.work_with_tokens:
             self.feat_proj = nn.Linear(self.dim, self.linear_dim)
-            self.cls_proj = nn.Linear(self.dim, self.linear_dim)
+            self.cls_proj = nn.Linear(self.dim, 256)
 
     def init_params(self, centroids, descriptors):
         centroids_assign = centroids / np.linalg.norm(centroids, axis=1, keepdims=True)

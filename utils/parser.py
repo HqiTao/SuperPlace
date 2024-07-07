@@ -53,8 +53,8 @@ def parse_arguments():
     parser.add_argument('--recall_values', type=int, default=[1, 5, 10, 100], nargs="+",
                         help="Recalls to be computed, such as R@1.")
     # Paths parameters
-    # parser.add_argument("--datasets_folder", type=str, default="/root/autodl-tmp", help="Path with all datasets")
-    parser.add_argument("--datasets_folder", type=str, default="/media/hello/data1/binux/datasets", help="Path with all datasets")
+    parser.add_argument("--datasets_folder", type=str, default="/root/autodl-tmp", help="Path with all datasets")
+    # parser.add_argument("--datasets_folder", type=str, default="/media/hello/data1/binux/datasets", help="Path with all datasets")
     # parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/Projects/npr/datasets", help="Path with all datasets")
     parser.add_argument("--dataset_name", type=str, default="pitts30k", help="Relative path of the dataset")
     parser.add_argument("--queries_name", type=str, default=None,

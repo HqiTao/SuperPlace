@@ -101,7 +101,7 @@ class GCA(nn.Module):
             GeM(),
             nn.Flatten(),
             nn.Linear(num_channels, num_hiddens),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(num_hiddens, num_channels),
             nn.Sigmoid())
     

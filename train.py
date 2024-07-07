@@ -27,16 +27,12 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 #### Creation of Datasets
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
-if args.use_extra_datasets:
-    random_datasets = gsv_cities.EXTRA_DATASETS.copy()
-    random.shuffle(random_datasets)
-    # train_ds = gsv_cities.GSVCitiesDataset(args, cities=(random_datasets))
-    train_ds = gsv_cities.GSVCitiesDataset(args, cities=(gsv_cities.EXTRA_DATASETS))
-else:
+if not args.use_extra_datasets:
     train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
+    train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
-train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
+resize_tmp = args.resize
 args.resize = [448, 448]
 val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
@@ -52,7 +48,9 @@ if args.aggregation == "netvlad":
         model.aggregation.initialize_netvlad_layer(args, cluster_ds, model.backbone)
     args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
     if args.use_cls:
-        args.features_dim = (args.clusters + 1) * args.linear_dim
+        args.features_dim = args.clusters * args.linear_dim + 256
+        
+args.resize = resize_tmp
 
 if args.use_lora:
     # model, _, best_r1, start_epoch_num, not_improved_num = util.resume_train(args, model, strict=False)
@@ -73,7 +71,10 @@ util.print_trainable_parameters(model)
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 if not args.resume:
-    scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.2, total_iters=4000)
+    if not args.use_extra_datasets:
+        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.2, total_iters=4000)
+    else:
+        scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.2, total_iters=15000)
 criterion = losses.MultiSimilarityLoss(alpha=1.0, beta=50, base=0.0, distance=distances.CosineSimilarity())
 miner = miners.MultiSimilarityMiner(epsilon=0.1, distance=distances.CosineSimilarity())
 if args.use_amp16:
@@ -83,11 +84,6 @@ if args.use_amp16:
 if args.resume:
     model, _, best_r1, start_epoch_num, not_improved_num = util.resume_train(args, model, strict=False)
     logging.info(f"Resuming from epoch {start_epoch_num} with best recall@1 {best_r1:.1f}")
-    best_r1 = 0 # maybe change the val dataset, maybe change the size, anyway, best_r1 should be computed from 0
-    if not args.use_extra_datasets:
-        recalls, recalls_str = test.test(args, val_ds, model)
-        logging.info(f"New Recalls on val set {val_ds}: {recalls_str}")
-        best_r1 = recalls[0]
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
@@ -95,6 +91,12 @@ else:
 #### Training loop
 for epoch_num in range(start_epoch_num, args.epochs_num):
     logging.info(f"Start training epoch: {epoch_num:02d}")
+
+    if args.use_extra_datasets:
+        random_datasets = gsv_cities.EXTRA_DATASETS.copy()
+        random.shuffle(random_datasets)
+        train_ds = gsv_cities.GSVCitiesDataset(args, cities=(random_datasets))
+        train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
     epoch_start_time = datetime.now()
     epoch_losses=[]
@@ -175,6 +177,15 @@ model = vgl_network.VGLNet_Test(args)
 model = model.to("cuda")
 model = util.resume_model(args, model)
 model = torch.nn.DataParallel(model)
+
+test_ds = base_dataset.BaseDataset(args, "test")
+logging.info(f"Test set: {test_ds}")
+recalls, recalls_str = test.test(args, test_ds, model)
+logging.info(f"Recalls on {test_ds}: {recalls_str}")
+
+logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
+
+args.dataset_name = "sf_xl"
 
 test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")

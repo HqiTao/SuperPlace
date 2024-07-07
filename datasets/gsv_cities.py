@@ -73,7 +73,9 @@ EXTRA_DATASETS_SF = ["SFXL0", "SFXL1", "SFXL2"]
 
 EXTRA_DATASETS_PITTS = ['Pittsburgh2A','Pittsburgh2B','Pittsburgh2C','Pittsburgh2D',]
 
-EXTRA_DATASETS = EXTRA_DATASETS_PITTS + EXTRA_DATASETS_SF + EXTRA_DATASETS_MSLS # + TRAIN_CITIES
+# EXTRA_DATASETS = EXTRA_DATASETS_MSLS + TRAIN_CITIES
+
+EXTRA_DATASETS = EXTRA_DATASETS_PITTS + EXTRA_DATASETS_SF + EXTRA_DATASETS_MSLS + TRAIN_CITIES
 
 class GSVCitiesDataset(Dataset):
     def __init__(self, args, cities=['London', 'Boston'], img_per_place=4, min_img_per_place=4):
