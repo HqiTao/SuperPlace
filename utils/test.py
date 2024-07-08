@@ -32,7 +32,8 @@ def test(args, eval_ds, model):
 
         
         logging.debug("Extracting queries features for evaluation/testing")
-        queries_infer_batch_size = args.infer_batch_size
+        # queries_infer_batch_size = args.infer_batch_size
+        queries_infer_batch_size = 1
         queries_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num, eval_ds.database_num+eval_ds.queries_num)))
         queries_dataloader = DataLoader(dataset=queries_subset_ds, num_workers=args.num_workers,
                                         batch_size=queries_infer_batch_size, pin_memory=True)
@@ -53,6 +54,17 @@ def test(args, eval_ds, model):
     
     logging.debug("Calculating recalls")
     distances, predictions = faiss_index.search(queries_features, max(args.recall_values))
+    
+    if args.dataset_name == "msls_challenge":
+        fp = open("msls_challenge.txt", "w")
+        for query in range(eval_ds.queries_num):
+            query_path = eval_ds.queries_paths[query]
+            fp.write(query_path.split("@")[-1][:-4]+' ')
+            for i in range(20):
+                pred_path = eval_ds.database_paths[predictions[query,i]]
+                fp.write(pred_path.split("@")[-1][:-4]+' ')
+            fp.write("\n")
+        fp.write("\n")
 
     #### For each query, check if the predictions are correct
     positives_per_query = eval_ds.get_positives()
