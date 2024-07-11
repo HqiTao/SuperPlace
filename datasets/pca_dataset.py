@@ -5,7 +5,7 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 
 class PCADataset(data.Dataset):
-    def __init__(self, args, datasets_folder="dataset", dataset_folder="pitts30k/images/train"):
+    def __init__(self, args, datasets_folder="/root/autodl-tmp", dataset_folder="pitts30k/images/train"):
         dataset_folder_full_path = os.path.join(datasets_folder, dataset_folder)
         if not os.path.exists(dataset_folder_full_path):
             raise FileNotFoundError(f"Folder {dataset_folder_full_path} does not exist")

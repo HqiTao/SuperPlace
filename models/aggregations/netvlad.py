@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, SubsetRandomSampler
 class NetVLAD(nn.Module):
     """NetVLAD layer implementation"""
 
-    def __init__(self, clusters_num=32, dim=128, normalize_input=True, work_with_tokens=False, linear_dim = 256):
+    def __init__(self, clusters_num=32, dim=128, normalize_input=True, work_with_tokens=False, linear_dim = 256, work_with_linear = False):
         """
         Args:
             clusters_num : int
@@ -32,6 +32,7 @@ class NetVLAD(nn.Module):
         self.alpha = 0
         self.normalize_input = normalize_input
         self.work_with_tokens = work_with_tokens
+        self.work_with_linear = work_with_linear
         self.linear_dim = linear_dim
         # if work_with_tokens:
         #     self.conv = nn.Conv1d(dim, clusters_num, kernel_size=1, bias=False)
@@ -39,9 +40,24 @@ class NetVLAD(nn.Module):
         self.conv = nn.Conv2d(dim, clusters_num, kernel_size=(1, 1), bias=False)
         self.centroids = nn.Parameter(torch.rand(clusters_num, dim))
 
-        if self.work_with_tokens:
+        if self.work_with_linear:
             self.feat_proj = nn.Linear(self.dim, self.linear_dim)
+            
+        if self.work_with_tokens:
             self.cls_proj = nn.Linear(self.dim, 256)
+            
+        # if self.work_with_linear:
+        #     self.feat_proj = nn.Sequential(
+        #     nn.Linear(self.dim, 512),
+        #     nn.GELU(),
+        #     nn.Linear(512, self.linear_dim)
+        # )
+        # if self.work_with_tokens:
+        #     self.cls_proj = nn.Sequential(
+        #     nn.Linear(self.dim, 512),
+        #     nn.GELU(),
+        #     nn.Linear(512, 256)
+        # )
 
     def init_params(self, centroids, descriptors):
         centroids_assign = centroids / np.linalg.norm(centroids, axis=1, keepdims=True)
@@ -74,10 +90,11 @@ class NetVLAD(nn.Module):
         # print(vlad.shape)
         vlad = F.normalize(vlad, p=2, dim=2)  # intra-normalization
 
-        if self.work_with_tokens:
-            cls_token_proj = F.normalize(self.cls_proj(cls_token), p=2, dim=-1)
-            vlad_proj = F.normalize(self.feat_proj(vlad).view(N, -1), p=2, dim=-1) # input: torch.Size([32, 32, 768]) out_put: torch.Size([32, 8192])
-            vlad = torch.cat([cls_token_proj, vlad_proj], dim=-1)
+        if self.work_with_linear:
+            vlad = F.normalize(self.feat_proj(vlad).view(N, -1), p=2, dim=-1) # input: torch.Size([32, 32, 768]) out_put: torch.Size([32, 8192])
+            if self.work_with_tokens:
+                cls_token_proj = F.normalize(self.cls_proj(cls_token), p=2, dim=-1)
+                vlad = torch.cat([cls_token_proj, vlad], dim=-1)
         else:
             vlad = vlad.view(N, -1)  # Flatten
             vlad = F.normalize(vlad, p=2, dim=1)  # L2 normalize
@@ -121,7 +138,7 @@ def print_nb_params(m):
 
 def main():
     x = torch.randn(32, 768, 16, 16), torch.randn(32, 768)
-    agg = NetVLAD(clusters_num=32, dim=768, normalize_input=True, work_with_tokens=True)
+    agg = NetVLAD(clusters_num=32, dim=768, normalize_input=True, work_with_tokens=False, linear_dim = 256, work_with_linear = True)
 
     print_nb_params(agg)
     output = agg(x)

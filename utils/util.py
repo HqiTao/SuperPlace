@@ -6,6 +6,7 @@ import logging
 from collections import OrderedDict
 import numpy as np
 from sklearn.decomposition import PCA
+import joblib
 
 from datasets import pca_dataset
 
@@ -80,7 +81,15 @@ def split_and_assign_qkv_parameters(model, pretrained_dict):
                             sublayer.k.bias.data = k_bias
                             sublayer.v.bias.data = v_bias
 
-def compute_pca(args, model, pca_dataset_folder, full_features_dim):
+def compute_pca(args, model, pca_dataset_folder, full_features_dim, pca_file_path = "./logs/pca.pkl"):
+    
+    try:
+        pca = joblib.load(pca_file_path)
+        print("Loaded PCA from file.")
+        return pca
+    except FileNotFoundError:
+        print("PCA file not found, computing PCA.")
+        
     model = model.eval()
     pca_ds = pca_dataset.PCADataset(args, args.datasets_folder, pca_dataset_folder)
     dl = torch.utils.data.DataLoader(pca_ds, args.infer_batch_size, shuffle=True)
@@ -93,6 +102,10 @@ def compute_pca(args, model, pca_dataset_folder, full_features_dim):
             pca_features[i*args.infer_batch_size : (i*args.infer_batch_size)+len(features)] = features
     pca = PCA(args.pca_dim)
     pca.fit(pca_features)
+    
+    joblib.dump(pca, pca_file_path)
+    print("PCA computed and saved to file.")
+    
     return pca
 
 def print_trainable_parameters(model):

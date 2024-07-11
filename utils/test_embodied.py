@@ -96,7 +96,7 @@ def test(args, eval_ds, model):
             np.save(database_features_dir, database_features)
         
         logging.debug("Extracting queries features for evaluation/testing")
-        queries_infer_batch_size = args.infer_batch_size
+        # queries_infer_batch_size = args.infer_batch_size
         queries_infer_batch_size = 1
         queries_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num, eval_ds.database_num+eval_ds.queries_num)))
         queries_dataloader = DataLoader(dataset=queries_subset_ds, num_workers=args.num_workers,
@@ -114,7 +114,7 @@ def test(args, eval_ds, model):
                 all_features[indices.numpy(), :] = features
             
             queries_features = all_features[eval_ds.database_num:]
-            np.save(queries_features_dir, queries_features)        
+            np.save(queries_features_dir, queries_features)
     
     faiss_index = faiss.IndexFlatL2(args.features_dim)
     faiss_index.add(database_features)
@@ -155,16 +155,16 @@ def test(args, eval_ds, model):
 
 #     predictions = np.array(new_predictions)
 
-#     if args.dataset_name == "msls_challenge":
-#         fp = open("msls_challenge.txt", "w")
-#         for query in range(eval_ds.queries_num):
-#             query_path = eval_ds.queries_paths[query]
-#             fp.write(query_path.split("@")[-1][:-4]+' ')
-#             for i in range(20):
-#                 pred_path = eval_ds.database_paths[predictions[query,i]]
-#                 fp.write(pred_path.split("@")[-1][:-4]+' ')
-#             fp.write("\n")
-#         fp.write("\n")
+    if args.dataset_name == "msls_challenge":
+        fp = open("msls_challenge.txt", "w")
+        for query in range(eval_ds.queries_num):
+            query_path = eval_ds.queries_paths[query]
+            fp.write(query_path.split("@")[-1][:-4]+' ')
+            for i in range(20):
+                pred_path = eval_ds.database_paths[predictions[query,i]]
+                fp.write(pred_path.split("@")[-1][:-4]+' ')
+            fp.write("\n")
+        fp.write("\n")
 
     #### For each query, check if the predictions are correct
     positives_per_query = eval_ds.get_positives()
@@ -177,7 +177,7 @@ def test(args, eval_ds, model):
                 break
     # Divide by the number of queries*100, so the recalls are in percentages
     recalls = recalls / eval_ds.queries_num * 100
-    recalls_str = ", ".join([f"R@{val}: {rec:.1f}" for val, rec in zip(args.recall_values, recalls)])
+    recalls_str = ", ".join([f"R@{val}: {rec:.2f}" for val, rec in zip(args.recall_values, recalls)])
 
     # Save visualizations of predictions
     if args.num_preds_to_save != 0:

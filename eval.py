@@ -21,9 +21,12 @@ model = vgl_network.VGLNet_Test(args)
 # model = dinov2_network.DINOv2(backbone=args.backbone) # used for PCA Vis
 model = model.to("cuda")
 if args.aggregation == "netvlad":
-    args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
-    if args.use_cls:
-        args.features_dim = args.clusters * args.linear_dim + 256
+    if args.use_linear:
+        args.features_dim = args.clusters * args.linear_dim
+        if args.use_cls:
+            args.features_dim += 256
+    else:
+        args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
         
 if args.resume != None:
     if args.use_lora:
@@ -42,11 +45,11 @@ else:
     args.features_dim = args.pca_dim
     pca = util.compute_pca(args, model, args.pca_dataset_folder, full_features_dim)
 
-test_ds = base_dataset.BaseDataset(args, "test")
+test_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
-recalls, recalls_str = test.test(args, test_ds, model)
+recalls, recalls_str = test.test(args, test_ds, model, pca)
 
 ######################################### Vis on DEMO SET ########################################
 

@@ -19,6 +19,10 @@ def parse_arguments():
                         help="")
     parser.add_argument("--use_ca", action="store_true",
                         help="")
+    parser.add_argument("--efficient_ram_testing", action="store_true",
+                        help="")
+    parser.add_argument("--use_linear", action="store_true",
+                        help="")
     parser.add_argument("--linear_dim", type=int, default=256,
                     help="linear_dim")
     # Training parameters
@@ -59,7 +63,7 @@ def parse_arguments():
     parser.add_argument("--dataset_name", type=str, default="pitts30k", help="Relative path of the dataset")
     parser.add_argument("--queries_name", type=str, default=None,
                         help="Path with images to be queried")
-    parser.add_argument("--pca_dataset_folder", type=str, default=None,
+    parser.add_argument("--pca_dataset_folder", type=str, default="pitts30k/images/train",
                         help="Path with images to be used to compute PCA (ie: pitts30k/images/train")
     parser.add_argument("--save_dir", type=str, default="",
                         help="Folder name of the current run (saved in ./logs/)")

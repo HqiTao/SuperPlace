@@ -1,4 +1,4 @@
-import sys, os, random
+import os, random
 import logging
 import numpy as np
 from tqdm import tqdm
@@ -27,9 +27,6 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 #### Creation of Datasets
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
-if not args.use_extra_datasets:
-    train_ds = gsv_cities.GSVCitiesDataset(args, cities=gsv_cities.TRAIN_CITIES)
-    train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
 
 
 resize_tmp = args.resize
@@ -46,9 +43,15 @@ if args.aggregation == "netvlad":
         args.dataset_name = "pitts30k"
         cluster_ds = base_dataset.BaseDataset(args, "train")
         model.aggregation.initialize_netvlad_layer(args, cluster_ds, model.backbone)
-    args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
-    if args.use_cls:
-        args.features_dim = args.clusters * args.linear_dim + 256
+        del cluster_ds
+        
+    if args.use_linear:
+        args.features_dim = args.clusters * args.linear_dim
+        if args.use_cls:
+            args.features_dim += 256
+    else:
+        args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+    
         
 args.resize = resize_tmp
 
@@ -63,10 +66,18 @@ if args.use_lora:
     lora_config = LoraConfig(r=64, lora_alpha=128, use_dora= False, target_modules=lora_modules, lora_dropout=0.01, modules_to_save=["aggregation"])
     model = get_peft_model(model, lora_config)
 
+if args.aggregation == "netvlad" and args.use_linear and args.resume != None:
+    for name, param in model.named_parameters():
+        if "aggregation.feat_proj" in name or "aggregation.cls_proj" in name :
+            param.requires_grad = True
+        else:
+            param.requires_grad = False
+    logging.info(f"Linear as Learned PCA and only fine-tuning linear.")
 
 model = torch.nn.DataParallel(model)
     
 util.print_trainable_parameters(model)
+# util.print_trainable_layers(model)
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
@@ -84,6 +95,8 @@ if args.use_amp16:
 if args.resume:
     model, _, best_r1, start_epoch_num, not_improved_num = util.resume_train(args, model, strict=False)
     logging.info(f"Resuming from epoch {start_epoch_num} with best recall@1 {best_r1:.1f}")
+    if args.aggregation == "netvlad" and args.use_linear:
+        best_r1 = 0
 else:
     best_r1 = start_epoch_num = not_improved_num = 0
 
@@ -93,11 +106,12 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     logging.info(f"Start training epoch: {epoch_num:02d}")
 
     if args.use_extra_datasets:
-        random_datasets = gsv_cities.EXTRA_DATASETS.copy()
-        random.shuffle(random_datasets)
-        train_ds = gsv_cities.GSVCitiesDataset(args, cities=(random_datasets))
-        train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
-
+        random_datasets = gsv_cities.GPMS_DATASETS.copy()
+    else: 
+        random_datasets = gsv_cities.TRAIN_CITIES.copy()
+    random.shuffle(random_datasets)
+    train_ds = gsv_cities.GSVCitiesDataset(args, cities=(random_datasets))
+    train_dl = DataLoader(train_ds, batch_size= args.train_batch_size, num_workers=args.num_workers, pin_memory= True)
     epoch_start_time = datetime.now()
     epoch_losses=[]
 
@@ -187,7 +201,7 @@ logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
 
 args.dataset_name = "sf_xl"
 
-test_ds = base_dataset.BaseDataset(args, "test")
+test_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Test set: {test_ds}")
 recalls, recalls_str = test.test(args, test_ds, model)
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
