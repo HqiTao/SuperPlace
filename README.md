@@ -57,7 +57,7 @@ CUDA_VISIBLE_DEVICES=3 python train.py --train_batch_size 64 --aggregation salad
 CUDA_VISIBLE_DEVICES=2,3 python train.py --train_batch_size 64 --aggregation netvlad --backbone dinov2_vitb14 --use_amp16 --dataset_name msls --epochs_num 5 --resize_test_imgs --infer_batch_size 64 --use_cls --clusters 32 --linear_dim 256
 CUDA_VISIBLE_DEVICES=2,3 python train.py --train_batch_size 64 --aggregation netvlad --backbone dinov2_vitb14 --use_amp16 --dataset_name msls --epochs_num 5 --resize_test_imgs --infer_batch_size 64 --clusters 32 --linear_dim 256
 CUDA_VISIBLE_DEVICES=0,1 python train.py --train_batch_size 64 --aggregation netvlad --backbone dinov2_vitb14 --use_amp16 --dataset_name msls --epochs_num 5 --resize_test_imgs --infer_batch_size 64 --use_cls --clusters 64 --linear_dim 128
-CUDA_VISIBLE_DEVICES=0,1 python train.py --train_batch_size 64 --aggregation netvlad --backbone dinov2_vitb14 --use_amp16 --dataset_name msls --epochs_num 5 --resize_test_imgs --infer_batch_size 64 --use_cls --clusters 128 --linear_dim 64
+CUDA_VISIBLE_DEVICES=2,3 python train.py --train_batch_size 64 --aggregation netvlad --backbone dinov2_vitb14 --use_amp16 --dataset_name msls --epochs_num 5 --resize_test_imgs --infer_batch_size 64 --use_cls --clusters 64 --linear_dim 128 --use_linear
 ```
 
 ## DINO-Large

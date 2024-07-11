@@ -45,7 +45,7 @@ else:
     args.features_dim = args.pca_dim
     pca = util.compute_pca(args, model, args.pca_dataset_folder, full_features_dim)
 
-test_ds = base_dataset.BaseDataset(args, "val")
+test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################

@@ -98,7 +98,7 @@ def compute_pca(args, model, pca_dataset_folder, full_features_dim, pca_file_pat
         for i, images in enumerate(dl):
             if i*args.infer_batch_size >= len(pca_features):
                 break
-            features = model(images).cpu().numpy()
+            features = model(images.to("cuda")).cpu().numpy()
             pca_features[i*args.infer_batch_size : (i*args.infer_batch_size)+len(features)] = features
     pca = PCA(args.pca_dim)
     pca.fit(pca_features)

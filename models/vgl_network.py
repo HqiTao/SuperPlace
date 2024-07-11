@@ -4,6 +4,7 @@ from models import dinov2_network
 import models.aggregations as aggregations
 
 import torchvision.transforms as transforms
+import time
 
 
 class VGLNet(nn.Module):
@@ -30,6 +31,8 @@ class VGLNet_Test(nn.Module):
         
         self.aggregation = get_aggregation(args)
         
+        self.all_time = 0
+        
     def forward(self, x):
 
         if not self.training:
@@ -39,7 +42,14 @@ class VGLNet_Test(nn.Module):
             x = transforms.functional.resize(x, [h, w], antialias=True)
 
         x = self.backbone(x)
+        
+        # start_time = time.time()
+        
         x = self.aggregation(x)
+        
+        # end_time = time.time()
+        # self.all_time = self.all_time + (end_time - start_time)
+
         return x
     
 

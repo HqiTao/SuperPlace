@@ -77,7 +77,7 @@ if args.aggregation == "netvlad" and args.use_linear and args.resume != None:
 model = torch.nn.DataParallel(model)
     
 util.print_trainable_parameters(model)
-# util.print_trainable_layers(model)
+util.print_trainable_layers(model)
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)

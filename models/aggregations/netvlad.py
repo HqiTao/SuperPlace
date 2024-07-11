@@ -52,12 +52,6 @@ class NetVLAD(nn.Module):
         #     nn.GELU(),
         #     nn.Linear(512, self.linear_dim)
         # )
-        # if self.work_with_tokens:
-        #     self.cls_proj = nn.Sequential(
-        #     nn.Linear(self.dim, 512),
-        #     nn.GELU(),
-        #     nn.Linear(512, 256)
-        # )
 
     def init_params(self, centroids, descriptors):
         centroids_assign = centroids / np.linalg.norm(centroids, axis=1, keepdims=True)
