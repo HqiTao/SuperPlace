@@ -49,14 +49,14 @@ test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
-recalls, recalls_str = test.test(args, test_ds, model, pca)
+# recalls, recalls_str = test.test(args, test_ds, model, pca)
 
 ######################################### Vis on DEMO SET ########################################
 
 # test_vis.test(args, test_ds, model)
 
 ######################################### EMBODIED TEST on TEST SET #########################################
-# recalls, recalls_str = test_embodied.test(args, test_ds, model)
+recalls, recalls_str = test_embodied.test(args, test_ds, model)
 
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
 

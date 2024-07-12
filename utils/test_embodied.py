@@ -15,7 +15,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Pitts: 1, 4, 10
 # MSLS:  5, 5, 10
-CORRECT_NUMS = 4
+CORRECT_NUMS = 5
 
 def weighted_feature(query_feature, database_features, query_idx):
 
@@ -96,8 +96,8 @@ def test(args, eval_ds, model):
             np.save(database_features_dir, database_features)
         
         logging.debug("Extracting queries features for evaluation/testing")
-        # queries_infer_batch_size = args.infer_batch_size
-        queries_infer_batch_size = 1
+        queries_infer_batch_size = args.infer_batch_size
+        # queries_infer_batch_size = 1
         queries_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num, eval_ds.database_num+eval_ds.queries_num)))
         queries_dataloader = DataLoader(dataset=queries_subset_ds, num_workers=args.num_workers,
                                         batch_size=queries_infer_batch_size, pin_memory=True)
@@ -123,37 +123,37 @@ def test(args, eval_ds, model):
     logging.debug("Calculating recalls")
     distances, predictions = faiss_index.search(queries_features, max(args.recall_values))
 
-#     soft_positives_per_database = eval_ds.get_positives_database()
-#     similarity_matrix = cosine_similarity(database_features)
-#     absolute_positives_per_database = get_absolute_positives(similarity_matrix, soft_positives_per_database)
-#     # save absolute_positives
+    soft_positives_per_database = eval_ds.get_positives_database()
+    similarity_matrix = cosine_similarity(database_features)
+    absolute_positives_per_database = get_absolute_positives(similarity_matrix, soft_positives_per_database)
+    # save absolute_positives
 
-#     # ''' 
-#     # L2(x - (y1 + y2 + y3) / 3)
-#     # '''
-#     rank_n = 10
-#     new_predictions = []
+    # ''' 
+    # L2(x - (y1 + y2 + y3) / 3)
+    # '''
+    rank_n = 10
+    new_predictions = []
 
-#     for query_idx in range(predictions.shape[0]):
-#         prediction = predictions[query_idx]
-#         query_feature = queries_features[query_idx]
+    for query_idx in range(predictions.shape[0]):
+        prediction = predictions[query_idx]
+        query_feature = queries_features[query_idx]
 
-#         embodied_candidates = [absolute_positives_per_database[pre] for pre in prediction[:rank_n]]
+        embodied_candidates = [absolute_positives_per_database[pre] for pre in prediction[:rank_n]]
 
-#         embodied_features = weighted_feature(query_feature, [database_features[cand] for cand in embodied_candidates], query_idx)
-#         cosine_similarities = (np.dot(embodied_features, query_feature) / (
-#                         np.linalg.norm(embodied_features, axis=1) * np.linalg.norm(query_feature)))
-#         distances = 1-cosine_similarities
+        embodied_features = weighted_feature(query_feature, [database_features[cand] for cand in embodied_candidates], query_idx)
+        cosine_similarities = (np.dot(embodied_features, query_feature) / (
+                        np.linalg.norm(embodied_features, axis=1) * np.linalg.norm(query_feature)))
+        distances = 1-cosine_similarities
 
-#         ranked_indices = np.argsort(distances)
-#         ranked_prediction = prediction[:rank_n][ranked_indices]
+        ranked_indices = np.argsort(distances)
+        ranked_prediction = prediction[:rank_n][ranked_indices]
 
-#         unranked_predictions = prediction[rank_n:]
-#         new_prediction = np.concatenate((ranked_prediction, unranked_predictions))
+        unranked_predictions = prediction[rank_n:]
+        new_prediction = np.concatenate((ranked_prediction, unranked_predictions))
 
-#         new_predictions.append(new_prediction)
+        new_predictions.append(new_prediction)
 
-#     predictions = np.array(new_predictions)
+    predictions = np.array(new_predictions)
 
     if args.dataset_name == "msls_challenge":
         fp = open("msls_challenge.txt", "w")
