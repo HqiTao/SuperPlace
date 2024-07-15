@@ -9,7 +9,6 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Subset
 from utils import visualizations
 
-
 def test_efficient_ram_usage(args, eval_ds, model):
     model = model.eval()
 
@@ -18,6 +17,7 @@ def test_efficient_ram_usage(args, eval_ds, model):
     with torch.inference_mode():
         queries_features = np.ones((eval_ds.queries_num, args.features_dim), dtype="float32")
         queries_infer_batch_size = 1
+        # queries_infer_batch_size = args.infer_batch_size
         queries_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num, eval_ds.database_num+eval_ds.queries_num)))
         queries_dataloader = DataLoader(dataset=queries_subset_ds, num_workers=args.num_workers,
                                         batch_size=queries_infer_batch_size, pin_memory=True)
@@ -33,8 +33,20 @@ def test_efficient_ram_usage(args, eval_ds, model):
         database_descriptors_dir = os.path.join(eval_ds.dataset_folder, f"database_{args.aggregation}.npy")
         if os.path.isfile(database_descriptors_dir) == 1:
             database_descriptors = np.load(database_descriptors_dir)
-            database_descriptors = torch.from_numpy(database_descriptors)
-            database_descriptors = database_descriptors.to('cuda')
+            total_size = database_descriptors.shape[0]
+            distances = np.empty((queries_features.shape[0], total_size), dtype=np.float32)
+
+            for batch_start in tqdm(range(0, total_size, 512)):
+                batch_end = min(batch_start + 521, total_size)
+                batch = database_descriptors[batch_start:batch_end]
+                batch = torch.from_numpy(batch).to('cuda')
+
+                for index, pred_feature in enumerate(batch):
+                    global_index = batch_start + index
+                    distances[:, global_index] = ((queries_features - pred_feature) ** 2).sum(1).cpu().numpy()
+
+                del batch
+            del queries_features, database_descriptors
         else: 
             all_descriptors = np.empty((len(eval_ds), args.features_dim), dtype="float32")
             for images, indices in tqdm(database_dataloader, ncols=100):
@@ -46,9 +58,9 @@ def test_efficient_ram_usage(args, eval_ds, model):
             database_descriptors = torch.from_numpy(database_descriptors)
             database_descriptors = database_descriptors.to('cuda')
 
-        for index, pred_feature in enumerate(database_descriptors):
-                distances[:, index] = ((queries_features - pred_feature) ** 2).sum(1).cpu().numpy()
-        del features, queries_features, pred_feature, database_descriptors
+            for index, pred_feature in enumerate(database_descriptors):
+                    distances[:, index] = ((queries_features - pred_feature) ** 2).sum(1).cpu().numpy()
+            del features, queries_features, pred_feature, database_descriptors
 
     predictions = distances.argsort(axis=1)[:, :max(args.recall_values)]
     del distances
@@ -99,8 +111,8 @@ def test(args, eval_ds, model , pca = None):
         # print(model.all_time / eval_ds.database_num)
         
         logging.debug("Extracting queries features for evaluation/testing")
-        queries_infer_batch_size = args.infer_batch_size
-        # queries_infer_batch_size = 1
+        # queries_infer_batch_size = args.infer_batch_size
+        queries_infer_batch_size = 1
         queries_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num, eval_ds.database_num+eval_ds.queries_num)))
         queries_dataloader = DataLoader(dataset=queries_subset_ds, num_workers=args.num_workers,
                                         batch_size=queries_infer_batch_size, pin_memory=True)

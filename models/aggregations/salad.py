@@ -127,11 +127,25 @@ def print_nb_params(m):
 
 
 def main():
-    x = torch.randn(1, 768, 16, 16), torch.randn(1, 768)
-    agg = SALAD()
+    import torch.cuda.amp as amp  
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
+    x = (torch.randn(1, 768, 16, 16, device=device), torch.randn(1, 768, device=device))  
 
+    agg = SALAD().to(device)
+    
+    import time
+    
     print_nb_params(agg)
-    output = agg(x)
+    
+    start_time = time.time()
+    for _ in range(3000): 
+        with torch.cuda.amp.autocast():  
+            output = agg(x)  
+    end_time = time.time()
+   
+    average_time = (end_time - start_time) / 3000  
+    print(f'Average time per pass: {average_time:.6f} seconds')
     print(output.shape)
 
 

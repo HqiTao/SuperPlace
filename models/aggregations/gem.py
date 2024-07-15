@@ -188,13 +188,33 @@ def print_nb_params(m):
 
 
 def main():
-    x = torch.randn(32, 768, 16, 16), torch.randn(32, 768)
-    agg = MixedGeM(num_channels=768, num_hiddens=3)
+    import torch.cuda.amp as amp  
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
+    x = (torch.randn(1, 768, 16, 16, device=device), torch.randn(1, 768, device=device))  
 
+    agg = G2M(
+        num_channels=768,
+        fc_output_dim=768,
+        num_hiddens=64,
+        use_cls=False,
+        use_ca=True,
+        pooling_method="gem",
+    ).to(device)
+
+    import time
+    
     print_nb_params(agg)
-    output = agg(x)
+    
+    start_time = time.time()
+    for _ in range(3000): 
+        with torch.cuda.amp.autocast():  
+            output = agg(x)  
+    end_time = time.time()
+   
+    average_time = (end_time - start_time) / 3000  
+    print(f'Average time per pass: {average_time:.6f} seconds')
     print(output.shape)
-
 
 if __name__ == "__main__":
     main()

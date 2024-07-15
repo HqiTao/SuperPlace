@@ -51,6 +51,12 @@ if args.aggregation == "netvlad":
             args.features_dim += 256
     else:
         args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+
+if args.aggregation == "boq":
+    if args.use_linear:
+        args.features_dim = 12288
+    else:
+        args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
     
         
 args.resize = resize_tmp
@@ -69,6 +75,14 @@ if args.use_lora:
 if args.aggregation == "netvlad" and args.use_linear and args.resume != None:
     for name, param in model.named_parameters():
         if "aggregation.feat_proj" in name or "aggregation.cls_proj" in name :
+            param.requires_grad = True
+        else:
+            param.requires_grad = False
+    logging.info(f"Linear as Learned PCA and only fine-tuning linear.")
+    
+if args.aggregation == "boq" and args.use_linear and args.resume != None:
+    for name, param in model.named_parameters():
+        if "aggregation.fc" in name:
             param.requires_grad = True
         else:
             param.requires_grad = False

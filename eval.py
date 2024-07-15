@@ -9,6 +9,8 @@ from datasets import base_dataset
 
 from peft import PeftModel
 
+from eval_boq import get_trained_boq
+
 args = parser.parse_arguments()
 start_time = datetime.now()
 args.save_dir = os.path.join("logs", args.save_dir, args.backbone + "_" + args.aggregation, args.dataset_name, start_time.strftime('%Y-%m-%d_%H-%M-%S'))
@@ -19,12 +21,21 @@ logging.info(f"The outputs are being saved in {args.save_dir}")
 
 model = vgl_network.VGLNet_Test(args)
 # model = dinov2_network.DINOv2(backbone=args.backbone) # used for PCA Vis
+if args.aggregation == "boq":
+    model = get_trained_boq("dinov2")
+
 model = model.to("cuda")
 if args.aggregation == "netvlad":
     if args.use_linear:
         args.features_dim = args.clusters * args.linear_dim
         if args.use_cls:
             args.features_dim += 256
+    else:
+        args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+        
+if args.aggregation == "boq":
+    if args.use_linear:
+        args.features_dim = args.clusters * args.linear_dim
     else:
         args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
         
@@ -49,14 +60,14 @@ test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
-# recalls, recalls_str = test.test(args, test_ds, model, pca)
+recalls, recalls_str = test.test(args, test_ds, model, pca)
 
 ######################################### Vis on DEMO SET ########################################
 
 # test_vis.test(args, test_ds, model)
 
 ######################################### EMBODIED TEST on TEST SET #########################################
-recalls, recalls_str = test_embodied.test(args, test_ds, model)
+# recalls, recalls_str = test_embodied.test(args, test_ds, model)
 
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
 

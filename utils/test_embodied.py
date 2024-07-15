@@ -73,6 +73,7 @@ def test(args, eval_ds, model):
     # if args.efficient_ram_testing:
         # return test_efficient_ram_usage(args, eval_ds, model, test_method)
     
+    # normal process
     model = model.eval()
     with torch.no_grad():
         logging.debug("Extracting database features for evaluation/testing")
@@ -122,7 +123,9 @@ def test(args, eval_ds, model):
 
     logging.debug("Calculating recalls")
     distances, predictions = faiss_index.search(queries_features, max(args.recall_values))
-
+    
+    # 1-st end
+    # if args.dataset_name != "msls":
     soft_positives_per_database = eval_ds.get_positives_database()
     similarity_matrix = cosine_similarity(database_features)
     absolute_positives_per_database = get_absolute_positives(similarity_matrix, soft_positives_per_database)

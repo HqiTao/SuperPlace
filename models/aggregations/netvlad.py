@@ -45,13 +45,6 @@ class NetVLAD(nn.Module):
             
         if self.work_with_tokens:
             self.cls_proj = nn.Linear(self.dim, 256)
-            
-        # if self.work_with_linear:
-        #     self.feat_proj = nn.Sequential(
-        #     nn.Linear(self.dim, 512),
-        #     nn.GELU(),
-        #     nn.Linear(512, self.linear_dim)
-        # )
 
     def init_params(self, centroids, descriptors):
         centroids_assign = centroids / np.linalg.norm(centroids, axis=1, keepdims=True)
@@ -131,11 +124,24 @@ def print_nb_params(m):
 
 
 def main():
-    x = torch.randn(32, 768, 16, 16), torch.randn(32, 768)
-    agg = NetVLAD(clusters_num=32, dim=768, normalize_input=True, work_with_tokens=False, linear_dim = 256, work_with_linear = True)
+    import torch.cuda.amp as amp  
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
+    x = (torch.randn(1, 768, 16, 16, device=device), torch.randn(1, 768, device=device))  
 
+    agg = NetVLAD(clusters_num=64, dim=768, normalize_input=True, work_with_tokens=True, linear_dim = 128, work_with_linear = True).to(device)
+
+    import time
+    
     print_nb_params(agg)
-    output = agg(x)
+    start_time = time.time()
+    for _ in range(3000): 
+        with torch.cuda.amp.autocast():  
+            output = agg(x)  
+    end_time = time.time()
+   
+    average_time = (end_time - start_time) / 3000  
+    print(f'Average time per pass: {average_time:.6f} seconds')
     print(output.shape)
 
 

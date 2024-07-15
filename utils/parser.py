@@ -34,12 +34,12 @@ def parse_arguments():
                         help="Batch size for inference.")
     parser.add_argument("--epochs_num", type=int, default=4,
                         help="number of epochs to train")
-    parser.add_argument("--patience", type=int, default=10)
+    parser.add_argument("--patience", type=int, default=3)
     parser.add_argument("--lr", type=float, default=0.00006, help="_")
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
                         choices=["dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
-    parser.add_argument("--aggregation", type=str, default="cosgem", choices=["salad", "netvlad", "cosgem", "cls", "g2m"])
+    parser.add_argument("--aggregation", type=str, default="cosgem", choices=["salad", "netvlad", "cosgem", "cls", "g2m", "boq"])
     parser.add_argument("--trainable_layers", type=str, default="8, 9, 10, 11",
                     help="Comma-separated list of layer indexes to be trained")
     parser.add_argument("--features_dim", type=int, default=768,

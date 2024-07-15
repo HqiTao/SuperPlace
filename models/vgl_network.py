@@ -57,7 +57,7 @@ def get_aggregation(args):
     if args.aggregation == "salad":
         return aggregations.SALAD(num_channels = dinov2_network.CHANNELS_NUM[args.backbone])
     elif args.aggregation == "netvlad":
-        return aggregations.NetVLAD(clusters_num=args.clusters, dim=dinov2_network.CHANNELS_NUM[args.backbone], work_with_tokens=args.use_cls, linear_dim= args.linear_dim, work_with_linear = args.use_linear)
+        return aggregations.NetVLAD(clusters_num=args.clusters, dim=dinov2_network.CHANNELS_NUM[args.backbone], work_with_tokens=args.use_cls, linear_dim = args.linear_dim, work_with_linear = args.use_linear)
     elif args.aggregation == "cosgem":
         return aggregations.CosGeM(features_dim=dinov2_network.CHANNELS_NUM[args.backbone], fc_output_dim=args.features_dim)
     elif args.aggregation == "cls":
@@ -70,4 +70,13 @@ def get_aggregation(args):
             use_cls=args.use_cls,
             use_ca=args.use_ca,
             pooling_method=args.ca_method,
+        )
+    elif args.aggregation == "boq":
+        return aggregations.BoQ(
+            in_channels=dinov2_network.CHANNELS_NUM[args.backbone],  # make sure the backbone has out_channels attribute
+            proj_channels=384,
+            num_queries=64,
+            num_layers=2,
+            row_dim=32, # 32 for dinov2
+            work_with_linear = args.use_linear
         )
