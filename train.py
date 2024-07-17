@@ -8,6 +8,8 @@ import torch
 from torch.utils.data.dataloader import DataLoader
 from pytorch_metric_learning import losses, miners, distances
 from peft import LoraConfig, get_peft_model
+from peft import PeftModel
+from torch.utils.tensorboard import SummaryWriter
 
 from utils import util, parser, commons, test
 from models import vgl_network, dinov2_network
@@ -92,6 +94,7 @@ model = torch.nn.DataParallel(model)
     
 util.print_trainable_parameters(model)
 util.print_trainable_layers(model)
+writer = SummaryWriter('runs/experiment')
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
@@ -130,7 +133,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     epoch_losses=[]
 
     model.train()
-    for places, labels in tqdm(train_dl, ncols=100):
+    for batch_idx, (places, labels) in enumerate(tqdm(train_dl, ncols=100, desc=f"Epoch {epoch_num+1}/{args.epochs_num}")):
 
         BS, N, ch, h, w = places.shape
         images = places.view(BS*N, ch, h, w)
@@ -157,6 +160,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
             scheduler.step()
 
         batch_loss = loss.item()
+        writer.add_scalar('training loss', batch_loss, epoch_num * len(train_dl) + batch_idx)
         epoch_losses = np.append(epoch_losses, batch_loss)
 
         del loss, features, miner_outputs, images, labels
@@ -187,12 +191,11 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     if args.use_lora:
         model.module.save_pretrained(os.path.join(args.save_dir, "lora"))
 
-
-
     if not_improved_num == args.patience and not args.resume:
         logging.info(f"Performance did not improve for {not_improved_num} epochs. Stop training.")
         break
 
+writer.close()
 logging.info(f"Best R@1: {best_r1:.1f}")
 logging.info(f"Trained for {epoch_num+1:02d} epochs, in total in {str(datetime.now() - start_time)[:-7]}")
 
@@ -203,7 +206,12 @@ args.resume = f"{args.save_dir}/best_model.pth"
 
 model = vgl_network.VGLNet_Test(args)
 model = model.to("cuda")
-model = util.resume_model(args, model)
+
+if args.use_lora:
+    model = PeftModel.from_pretrained(model, f"{args.save_dir}/lora")
+else:
+    model = util.resume_model(args, model)
+
 model = torch.nn.DataParallel(model)
 
 test_ds = base_dataset.BaseDataset(args, "test")

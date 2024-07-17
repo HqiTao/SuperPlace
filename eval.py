@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 import torch
 
-from utils import parser, commons, util, test, test_vis, test_embodied
+from utils import parser, commons, util, test, test_vis, test_embodied, test_rerank
 from models import vgl_network, dinov2_network
 from datasets import base_dataset
 
@@ -56,11 +56,13 @@ else:
     args.features_dim = args.pca_dim
     pca = util.compute_pca(args, model, args.pca_dataset_folder, full_features_dim)
 
+args.features_dim = 768
+
 test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
-recalls, recalls_str = test.test(args, test_ds, model, pca)
+recalls, recalls_str = test_rerank.test(args, test_ds, model, pca)
 
 ######################################### Vis on DEMO SET ########################################
 
