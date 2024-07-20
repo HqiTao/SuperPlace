@@ -40,7 +40,7 @@ class BaseDataset(data.Dataset):
                                                              return_distance=False)
         
         self.soft_positives_per_database = knn.radius_neighbors(self.database_utms,
-                                                             radius=1,
+                                                             radius=5,
                                                              return_distance=False)
         
         self.images_paths = list(self.database_paths) + list(self.queries_paths)

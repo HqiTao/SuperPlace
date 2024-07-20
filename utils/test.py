@@ -111,8 +111,8 @@ def test(args, eval_ds, model , pca = None):
         # print(model.all_time / eval_ds.database_num)
         
         logging.debug("Extracting queries features for evaluation/testing")
-        # queries_infer_batch_size = args.infer_batch_size
-        queries_infer_batch_size = 1
+        queries_infer_batch_size = args.infer_batch_size
+        # queries_infer_batch_size = 1
         queries_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num, eval_ds.database_num+eval_ds.queries_num)))
         queries_dataloader = DataLoader(dataset=queries_subset_ds, num_workers=args.num_workers,
                                         batch_size=queries_infer_batch_size, pin_memory=True)

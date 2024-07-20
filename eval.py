@@ -9,7 +9,6 @@ from datasets import base_dataset
 
 from peft import PeftModel
 
-from eval_boq import get_trained_boq
 
 args = parser.parse_arguments()
 start_time = datetime.now()
@@ -20,9 +19,7 @@ logging.info(f"Arguments: {args}")
 logging.info(f"The outputs are being saved in {args.save_dir}")
 
 model = vgl_network.VGLNet_Test(args)
-# model = dinov2_network.DINOv2(backbone=args.backbone) # used for PCA Vis
-if args.aggregation == "boq":
-    model = get_trained_boq("dinov2")
+
 
 model = model.to("cuda")
 if args.aggregation == "netvlad":
@@ -33,12 +30,7 @@ if args.aggregation == "netvlad":
     else:
         args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
         
-if args.aggregation == "boq":
-    if args.use_linear:
-        args.features_dim = args.clusters * args.linear_dim
-    else:
-        args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
-        
+
 if args.resume != None:
     if args.use_lora:
         logging.info(f"Resuming lora model from {args.resume}")
@@ -56,22 +48,15 @@ else:
     args.features_dim = args.pca_dim
     pca = util.compute_pca(args, model, args.pca_dataset_folder, full_features_dim)
 
-args.features_dim = 768
 
 test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
 recalls, recalls_str = test_rerank.test(args, test_ds, model, pca)
-
-######################################### Vis on DEMO SET ########################################
-
-# test_vis.test(args, test_ds, model)
-
 ######################################### EMBODIED TEST on TEST SET #########################################
 # recalls, recalls_str = test_embodied.test(args, test_ds, model)
 
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
-
 logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
 

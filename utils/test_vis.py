@@ -10,6 +10,7 @@ from torch.utils.data.dataset import Subset
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from scipy.signal import savgol_filter
 
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
 logging.getLogger('PIL').setLevel(logging.ERROR)
@@ -22,37 +23,36 @@ def test(args, eval_ds, model):
         logging.debug("Extracting database features for evaluation/testing")
         database_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num)))
         database_dataloader = DataLoader(dataset=database_subset_ds, num_workers=args.num_workers,
-                                         batch_size=1, pin_memory=True)
+                                         batch_size=args.infer_batch_size, pin_memory=True)
+        all_attn = []
+        all_feat = []
         for inputs, indices in tqdm(database_dataloader, ncols=100):
             B, C, H, W = inputs.shape
-            feature_map, cls_token = model(inputs.to("cuda"))
-            feature_maps.append(feature_map)
-        patch_h, patch_w = H//14, W//14
-        feature_maps = torch.cat(feature_maps, dim = 0)
+            feat, attn_feat = model(inputs.to("cuda"))
+            # print(feat.shape, attn_feat.shape)
+            all_attn.append(attn_feat.detach().cpu().squeeze())
+            all_feat.append(feat.detach().cpu().squeeze())
 
-        feature_maps = feature_maps.reshape(-1, 768).cpu()
+        all_attn = torch.stack(all_attn)
+        mean_attn = all_attn.mean(0)
+        std_attn = all_attn.std(0).numpy()
 
-        pca = PCA(n_components=3)
-        pca.fit(feature_maps)
-        pca_features = pca.transform(feature_maps)
+        all_feat = torch.stack(all_feat)
+        mean_feat = all_feat.mean(0)
+        std_feat = all_feat.std(0).numpy()
 
-        components = pca.components_
+        channel_ids = torch.arange(feat.shape[1])
 
-        # for i in range(3):
-        #     component = components[i]
-        #     contributions = np.abs(component)
-        #     most_contributive_channels = contributions.argsort()[-10:][::-1]
-
-        #     print(f"Principal Component {i+1}: Top contributing channels: {most_contributive_channels}")
-        #     print(f"Contributions: {contributions[most_contributive_channels]}")
-
-        choice_dim = 2
-        pca_features[:, choice_dim] = (pca_features[:, choice_dim] - pca_features[:, choice_dim].min()) / \
-                                      (pca_features[:, choice_dim].max() - pca_features[:, choice_dim].min())
-
-        for i in range(7):
-            plt.subplot(3, 3, i+1)
-            plt.imshow(pca_features[i*patch_h*patch_w : (i+1)*patch_h*patch_w, choice_dim].reshape(patch_h, patch_w))
-            plt.axis('off')
-
-        plt.savefig(f"pca_{choice_dim}.png")
+        smooth_mean_attn = savgol_filter(mean_attn, 25, 3)
+        smooth_mean_feat = savgol_filter(mean_feat, 25, 3)
+        print()
+        plt.figure(figsize=(12, 4))
+        # plt.plot(channel_ids, smooth_mean_attn, label='G2M', color='salmon', linewidth=1)
+        # plt.fill_between(channel_ids, smooth_mean_attn - std_attn, smooth_mean_attn + std_attn, color='salmon', alpha=0.4)
+        plt.plot(channel_ids, smooth_mean_feat, label='G2M', color='blue', linewidth=1)
+        plt.fill_between(channel_ids, smooth_mean_feat - std_feat, smooth_mean_feat + std_feat, color='blue', alpha=0.2)
+        plt.xlabel('Channel ID')
+        plt.ylabel('Channel Value')
+        plt.legend()
+        plt.subplots_adjust(left=0.08, right=0.92)
+        plt.savefig(f"attention.png")

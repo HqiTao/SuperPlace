@@ -13,8 +13,8 @@ from lightglue import LightGlue, SuperPoint
 from lightglue.utils import load_image, rbd
 from sklearn.metrics.pairwise import cosine_similarity
 
-CORRECT_NUMS = 3
-RERANKS = 3
+CORRECT_NUMS = 4
+RERANKS = 20
 
 class embodied_reranking():
     def __init__(self, eval_ds, predictions, database_features):
@@ -27,7 +27,11 @@ class embodied_reranking():
         self.database_featurs = database_features
         self.predictions = predictions
 
-        self.soft_positives_per_database = eval_ds.get_positives_database()
+        if eval_ds.dataset_name != "msls":
+            self.soft_positives_per_database = eval_ds.get_positives_database()
+        else:
+            self.soft_positives_per_database = None
+            
         self.similarity_matrix = cosine_similarity(database_features)
         self.absolute_positives_per_database = self.get_absolute_positives(self.similarity_matrix, self.soft_positives_per_database)
 
@@ -46,7 +50,7 @@ class embodied_reranking():
 
 
     def reranking(self):
-        for query in range(self.queries_num):
+        for query in tqdm(range(self.queries_num)):
             query_path = self.queries_paths[query]
             image_query = load_image(query_path).cuda()
             feats0 = self.extractor.extract(image_query, resize=None)  # auto-resize the image, disable with resize=None
@@ -69,6 +73,16 @@ class embodied_reranking():
     
     @staticmethod
     def get_absolute_positives(similarity_matrix, soft_positives_per_database, k=CORRECT_NUMS+1):
+        if soft_positives_per_database == None:
+            absolute_positives_per_database = []
+
+            for i in range(similarity_matrix.shape[0]):
+                top_k_indices = np.argsort(similarity_matrix[i])[-k:][::-1]
+                absolute_positives = [idx for idx in top_k_indices]
+                absolute_positives_per_database.append(absolute_positives)
+
+            return absolute_positives_per_database
+
         absolute_positives_per_database = []
 
         for i, soft_positives in enumerate(soft_positives_per_database):
@@ -218,8 +232,8 @@ def test(args, eval_ds, model , pca = None):
     logging.debug("Calculating recalls")
     distances, predictions = faiss_index.search(queries_features, max(args.recall_values))
 
-    rerank = embodied_reranking(eval_ds, predictions, database_features)
-    predictions = rerank.reranking()
+    # rerank = embodied_reranking(eval_ds, predictions, database_features)
+    # predictions = rerank.reranking()
 
     del database_features
     

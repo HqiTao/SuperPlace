@@ -15,43 +15,83 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Pitts: 1, 4, 10
 # MSLS:  5, 5, 10
-CORRECT_NUMS = 5
+CORRECT_NUMS = 4
+
+WEIGHT = 0.6
+
+# def weighted_feature(query_feature, database_features, query_idx):
+
+#     embodied_features = [np.zeros_like(db[0]) for db in database_features]
+
+#     weights_sum = None
+
+#     for i in range(1, CORRECT_NUMS + 1):
+
+#         cosine_similarities = []
+#         for db in database_features:
+#             if i < len(db):
+#                 cosine_similarity = np.dot(db[i], query_feature) / (np.linalg.norm(db[i]) * np.linalg.norm(query_feature))
+#             else:
+#                 cosine_similarity = 0
+#             cosine_similarities.append(cosine_similarity)
+
+#         cos_distances = 1 - np.array(cosine_similarities)
+#         weights = cos_distances / sum(cos_distances)
+
+#         for j, db in enumerate(database_features):
+#             if i < len(db):
+#                 embodied_features[j] += weights[j] * db[i]
+
+#         if weights_sum is None:
+#             weights_sum = weights
+#         else:
+#             weights_sum += weights
+
+
+#     embodied_features = [embodied_features[i] + (1-weights_sum[i]) * db[0] for i, db in enumerate(database_features)]
+
+#     return embodied_features
 
 def weighted_feature(query_feature, database_features, query_idx):
 
     embodied_features = [np.zeros_like(db[0]) for db in database_features]
 
-    weights_sum = None
-
-    for i in range(1, CORRECT_NUMS + 1):
+    for db_idx, db in enumerate(database_features):
 
         cosine_similarities = []
-        for db in database_features:
+
+        for i in range(CORRECT_NUMS+1):
             if i < len(db):
                 cosine_similarity = np.dot(db[i], query_feature) / (np.linalg.norm(db[i]) * np.linalg.norm(query_feature))
             else:
                 cosine_similarity = 0
             cosine_similarities.append(cosine_similarity)
+        print(cosine_similarities)
+        # cos_distances = 1 - np.array(cosine_similarities)
+        weights = cosine_similarities / sum(cosine_similarities)
 
-        cos_distances = 1 - np.array(cosine_similarities)
-        weights = cos_distances / sum(cos_distances)
-
-        for j, db in enumerate(database_features):
+        for i in range(CORRECT_NUMS+1):
             if i < len(db):
-                embodied_features[j] += weights[j] * db[i]
+                embodied_features[db_idx] += weights[i] * db[i]
+            else:
+                embodied_features[db_idx] += 0 
 
-        if weights_sum is None:
-            weights_sum = weights
-        else:
-            weights_sum += weights
-
-
-    embodied_features = [embodied_features[i] + (1-weights_sum[i]) * db[0] for i, db in enumerate(database_features)]
+        embodied_features[db_idx] = (1-WEIGHT) * embodied_features[db_idx] + WEIGHT * db[0]
 
     return embodied_features
 
 
 def get_absolute_positives(similarity_matrix, soft_positives_per_database, k=CORRECT_NUMS+1):
+    if soft_positives_per_database == None:
+        absolute_positives_per_database = []
+
+        for i in range(similarity_matrix.shape[0]):
+            top_k_indices = np.argsort(similarity_matrix[i])[-k:][::-1]
+            absolute_positives = [idx for idx in top_k_indices]
+            absolute_positives_per_database.append(absolute_positives)
+
+        return absolute_positives_per_database
+
     absolute_positives_per_database = []
 
     for i, soft_positives in enumerate(soft_positives_per_database):
@@ -125,8 +165,10 @@ def test(args, eval_ds, model):
     distances, predictions = faiss_index.search(queries_features, max(args.recall_values))
     
     # 1-st end
-    # if args.dataset_name != "msls":
-    soft_positives_per_database = eval_ds.get_positives_database()
+    if args.dataset_name != "msls":
+        soft_positives_per_database = eval_ds.get_positives_database()
+    else:
+        soft_positives_per_database = None
     similarity_matrix = cosine_similarity(database_features)
     absolute_positives_per_database = get_absolute_positives(similarity_matrix, soft_positives_per_database)
     # save absolute_positives

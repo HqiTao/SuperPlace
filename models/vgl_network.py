@@ -71,12 +71,3 @@ def get_aggregation(args):
             use_ca=args.use_ca,
             pooling_method=args.ca_method,
         )
-    elif args.aggregation == "boq":
-        return aggregations.BoQ(
-            in_channels=dinov2_network.CHANNELS_NUM[args.backbone],  # make sure the backbone has out_channels attribute
-            proj_channels=384,
-            num_queries=64,
-            num_layers=2,
-            row_dim=32, # 32 for dinov2
-            work_with_linear = args.use_linear
-        )
