@@ -1,0 +1,7 @@
+2024-07-18 21:10:37   Arguments: Namespace(aggregation='netvlad', backbone='dinov2_vitl14', ca_method='gem', clusters=64, dataset_name='nordland', datasets_folder='/root/autodl-tmp', efficient_ram_testing=False, epochs_num=4, features_dim=768, infer_batch_size=64, linear_dim=256, lr=6e-05, num_hiddens=3, num_preds_to_save=0, num_workers=16, patience=3, pca_dataset_folder='pitts30k/images/train', pca_dim=None, queries_name=None, recall_values=[1, 5, 10, 100], resize=[224, 224], resize_test_imgs=False, resume='logs/dinov2_vitl14_netvlad/gsv_cities/k64_GPMS/best_model.pth', save_dir='logs/dinov2_vitl14_netvlad/nordland/2024-07-18_21-10-37', save_only_wrong_preds=False, seed=0, train_batch_size=32, trainable_layers='8, 9, 10, 11', use_amp16=False, use_ca=False, use_cls=False, use_extra_datasets=False, use_linear=False, use_lora=False, val_positive_dist_threshold=25)
+2024-07-18 21:10:37   The outputs are being saved in logs/dinov2_vitl14_netvlad/nordland/2024-07-18_21-10-37
+2024-07-18 21:10:37   using MLP layer as FFN
+2024-07-18 21:10:42   Resuming model from logs/dinov2_vitl14_netvlad/gsv_cities/k64_GPMS/best_model.pth
+2024-07-18 21:10:43   Test set: < BaseDataset, nordland - #database: 27592; #queries: 27592 >
+2024-07-18 21:53:43   Recalls on < BaseDataset, nordland - #database: 27592; #queries: 27592 >: R@1: 94.81, R@5: 98.11, R@10: 99.54, R@100: 99.96
+2024-07-18 21:53:43   Finished in 0:43:06

@@ -1,0 +1,36 @@
+2024-07-12 20:57:38   Arguments: Namespace(aggregation='netvlad', backbone='dinov2_vitb14', ca_method='gem', clusters=64, dataset_name='msls', datasets_folder='/root/autodl-tmp', efficient_ram_testing=False, epochs_num=5, features_dim=768, infer_batch_size=64, linear_dim=128, lr=6e-05, num_hiddens=3, num_preds_to_save=0, num_workers=16, patience=10, pca_dataset_folder='pitts30k/images/train', pca_dim=None, queries_name=None, recall_values=[1, 5, 10, 100], resize=[224, 224], resize_test_imgs=True, resume=None, save_dir='logs/dinov2_vitb14_netvlad/gsv_cities/2024-07-12_20-57-38', save_only_wrong_preds=False, seed=0, train_batch_size=64, trainable_layers='8, 9, 10, 11', use_amp16=True, use_ca=False, use_cls=True, use_extra_datasets=True, use_linear=True, use_lora=False, val_positive_dist_threshold=25)
+2024-07-12 20:57:38   The outputs are being saved in logs/dinov2_vitb14_netvlad/gsv_cities/2024-07-12_20-57-38
+2024-07-12 20:57:38   Using 4 GPUs
+2024-07-12 20:57:39   Val set: < BaseDataset, msls - #database: 18871; #queries: 740 >
+2024-07-12 20:57:39   using MLP layer as FFN
+2024-07-12 20:57:59   trainable params: 28751232 || all params: 86974080 || trainable%: 33.06
+2024-07-12 20:57:59   module.backbone.model.blocks.8.norm1.weight, module.backbone.model.blocks.8.attn.q.weight, module.backbone.model.blocks.8.attn.k.weight, module.backbone.model.blocks.8.attn.v.weight, module.backbone.model.blocks.8.attn.proj.weight, module.backbone.model.blocks.8.ls1.gamma, module.backbone.model.blocks.8.norm2.weight, module.backbone.model.blocks.8.mlp.fc1.weight, module.backbone.model.blocks.8.mlp.fc2.weight, module.backbone.model.blocks.8.ls2.gamma, module.backbone.model.blocks.9.norm1.weight, module.backbone.model.blocks.9.attn.q.weight, module.backbone.model.blocks.9.attn.k.weight, module.backbone.model.blocks.9.attn.v.weight, module.backbone.model.blocks.9.attn.proj.weight, module.backbone.model.blocks.9.ls1.gamma, module.backbone.model.blocks.9.norm2.weight, module.backbone.model.blocks.9.mlp.fc1.weight, module.backbone.model.blocks.9.mlp.fc2.weight, module.backbone.model.blocks.9.ls2.gamma, module.backbone.model.blocks.10.norm1.weight, module.backbone.model.blocks.10.attn.q.weight, module.backbone.model.blocks.10.attn.k.weight, module.backbone.model.blocks.10.attn.v.weight, module.backbone.model.blocks.10.attn.proj.weight, module.backbone.model.blocks.10.ls1.gamma, module.backbone.model.blocks.10.norm2.weight, module.backbone.model.blocks.10.mlp.fc1.weight, module.backbone.model.blocks.10.mlp.fc2.weight, module.backbone.model.blocks.10.ls2.gamma, module.backbone.model.blocks.11.norm1.weight, module.backbone.model.blocks.11.attn.q.weight, module.backbone.model.blocks.11.attn.k.weight, module.backbone.model.blocks.11.attn.v.weight, module.backbone.model.blocks.11.attn.proj.weight, module.backbone.model.blocks.11.ls1.gamma, module.backbone.model.blocks.11.norm2.weight, module.backbone.model.blocks.11.mlp.fc1.weight, module.backbone.model.blocks.11.mlp.fc2.weight, module.backbone.model.blocks.11.ls2.gamma, module.aggregation.centroids, module.aggregation.conv.weight, module.aggregation.feat_proj.weight, module.aggregation.cls_proj.weight
+2024-07-12 20:57:59   Start training epoch: 00
+2024-07-12 21:15:13   Finished epoch 00 in 0:17:02, average epoch loss = 0.4159
+2024-07-12 21:17:15   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 92.03, R@5: 96.49, R@10: 97.16, R@100: 98.38
+2024-07-12 21:17:15   Improved: previous best R@1 = 0.0, current R@1 = 92.0
+2024-07-12 21:17:16   Start training epoch: 01
+2024-07-12 21:32:22   Finished epoch 01 in 0:14:55, average epoch loss = 0.3097
+2024-07-12 21:33:46   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 91.62, R@5: 97.16, R@10: 97.84, R@100: 98.78
+2024-07-12 21:33:46   Not improved: 1 / 10: best R@1 = 92.0, current R@1 = 91.6
+2024-07-12 21:33:47   Start training epoch: 02
+2024-07-12 21:48:34   Finished epoch 02 in 0:14:37, average epoch loss = 0.2636
+2024-07-12 21:49:59   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 92.84, R@5: 97.03, R@10: 97.43, R@100: 98.78
+2024-07-12 21:49:59   Improved: previous best R@1 = 92.0, current R@1 = 92.8
+2024-07-12 21:50:00   Start training epoch: 03
+2024-07-12 22:04:57   Finished epoch 03 in 0:14:45, average epoch loss = 0.2297
+2024-07-12 22:06:15   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 92.16, R@5: 97.03, R@10: 97.57, R@100: 98.92
+2024-07-12 22:06:15   Not improved: 1 / 10: best R@1 = 92.8, current R@1 = 92.2
+2024-07-12 22:06:16   Start training epoch: 04
+2024-07-12 22:21:09   Finished epoch 04 in 0:14:43, average epoch loss = 0.2010
+2024-07-12 22:22:43   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 92.70, R@5: 97.16, R@10: 97.57, R@100: 99.19
+2024-07-12 22:22:43   Not improved: 2 / 10: best R@1 = 92.8, current R@1 = 92.7
+2024-07-12 22:22:44   Best R@1: 92.8
+2024-07-12 22:22:44   Trained for 05 epochs, in total in 1:25:05
+2024-07-12 22:22:44   using MLP layer as FFN
+2024-07-12 22:22:47   Test set: < BaseDataset, pitts30k - #database: 10000; #queries: 6816 >
+2024-07-12 22:25:05   Recalls on < BaseDataset, pitts30k - #database: 10000; #queries: 6816 >: R@1: 93.09, R@5: 97.21, R@10: 98.09, R@100: 99.40
+2024-07-12 22:25:05   Finished in 1:27:26
+2024-07-12 22:25:05   Test set: < BaseDataset, sf_xl - #database: 8015; #queries: 7993 >
+2024-07-12 22:27:01   Recalls on < BaseDataset, sf_xl - #database: 8015; #queries: 7993 >: R@1: 94.85, R@5: 97.90, R@10: 98.46, R@100: 99.55
+2024-07-12 22:27:01   Finished in 1:29:22

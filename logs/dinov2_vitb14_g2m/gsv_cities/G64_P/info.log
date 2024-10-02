@@ -1,0 +1,20 @@
+2024-07-07 02:16:51   Arguments: Namespace(aggregation='g2m', backbone='dinov2_vitb14', ca_method='gem', clusters=64, dataset_name='msls', datasets_folder='/root/autodl-tmp', epochs_num=4, features_dim=768, infer_batch_size=256, linear_dim=256, lr=1e-05, num_hiddens=64, num_preds_to_save=0, num_workers=16, patience=10, pca_dataset_folder=None, pca_dim=None, queries_name=None, recall_values=[1, 5, 10, 100], resize=[224, 224], resize_test_imgs=True, resume='logs/dinov2_vitb14_g2m/gsv_cities/G64/best_model.pth', save_dir='logs/dinov2_vitb14_g2m/gsv_cities/2024-07-07_02-16-51', save_only_wrong_preds=False, seed=0, train_batch_size=64, trainable_layers='8, 9, 10, 11', use_amp16=True, use_ca=True, use_cls=False, use_extra_datasets=True, use_lora=False, val_positive_dist_threshold=25)
+2024-07-07 02:16:51   The outputs are being saved in logs/dinov2_vitb14_g2m/gsv_cities/2024-07-07_02-16-51
+2024-07-07 02:16:51   Using 4 GPUs
+2024-07-07 02:16:52   Val set: < BaseDataset, msls - #database: 18871; #queries: 740 >
+2024-07-07 02:16:52   using MLP layer as FFN
+2024-07-07 02:16:53   trainable params: 29047362 || all params: 87270210 || trainable%: 33.28
+2024-07-07 02:16:53   Resuming from epoch 3 with best recall@1 90.4
+2024-07-07 02:16:53   Start training epoch: 03
+2024-07-07 02:16:58   Finished epoch 03 in 0:00:05, average epoch loss = 0.5917
+2024-07-07 02:17:57   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 90.81, R@5: 96.62, R@10: 96.62, R@100: 98.24
+2024-07-07 02:17:57   Improved: previous best R@1 = 90.4, current R@1 = 90.8
+2024-07-07 02:17:58   Best R@1: 90.8
+2024-07-07 02:17:58   Trained for 04 epochs, in total in 0:01:06
+2024-07-07 02:17:58   using MLP layer as FFN
+2024-07-07 02:17:59   Test set: < BaseDataset, pitts30k - #database: 10000; #queries: 6816 >
+2024-07-07 02:19:17   Recalls on < BaseDataset, pitts30k - #database: 10000; #queries: 6816 >: R@1: 93.10, R@5: 96.86, R@10: 97.67, R@100: 99.24
+2024-07-07 02:19:17   Finished in 0:02:25
+2024-07-07 02:19:17   Test set: < BaseDataset, sf_xl - #database: 8015; #queries: 7993 >
+2024-07-07 02:20:20   Recalls on < BaseDataset, sf_xl - #database: 8015; #queries: 7993 >: R@1: 91.76, R@5: 96.10, R@10: 97.25, R@100: 99.42
+2024-07-07 02:20:20   Finished in 0:03:28

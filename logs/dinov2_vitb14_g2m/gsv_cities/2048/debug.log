@@ -1,0 +1,68 @@
+2024-07-21 00:19:10   Arguments: Namespace(aggregation='g2m', backbone='dinov2_vitb14', ca_method='gem', clusters=64, dataset_name='msls', datasets_folder='/root/autodl-tmp', efficient_ram_testing=False, epochs_num=10, features_dim=2048, infer_batch_size=64, linear_dim=256, lr=1.2e-05, num_hiddens=64, num_preds_to_save=0, num_workers=16, patience=3, pca_dataset_folder='pitts30k/images/train', pca_dim=None, queries_name=None, recall_values=[1, 5, 10, 100], resize=[322, 322], resize_test_imgs=True, resume='logs/dinov2_vitb14_g2m/gsv_cities/2048/best_model.pth', save_dir='logs/dinov2_vitb14_g2m/gsv_cities/2024-07-21_00-19-10', save_only_wrong_preds=False, seed=0, train_batch_size=64, trainable_layers='8, 9, 10, 11', use_amp16=True, use_ca=True, use_cls=False, use_extra_datasets=True, use_linear=False, use_lora=False, val_positive_dist_threshold=25)
+2024-07-21 00:19:10   The outputs are being saved in logs/dinov2_vitb14_g2m/gsv_cities/2024-07-21_00-19-10
+2024-07-21 00:19:10   Using 2 GPUs
+2024-07-21 00:19:10   Loading gsv_cities and msls from folder /root/autodl-tmp
+2024-07-21 00:19:10   Val set: < BaseDataset, msls - #database: 18871; #queries: 740 >
+2024-07-21 00:19:10   using MLP layer as FFN
+2024-07-21 00:19:11   trainable params: 30031682 || all params: 88254530 || trainable%: 34.03
+2024-07-21 00:19:11   module.backbone.model.blocks.8.norm1.weight, module.backbone.model.blocks.8.attn.q.weight, module.backbone.model.blocks.8.attn.k.weight, module.backbone.model.blocks.8.attn.v.weight, module.backbone.model.blocks.8.attn.proj.weight, module.backbone.model.blocks.8.ls1.gamma, module.backbone.model.blocks.8.norm2.weight, module.backbone.model.blocks.8.mlp.fc1.weight, module.backbone.model.blocks.8.mlp.fc2.weight, module.backbone.model.blocks.8.ls2.gamma, module.backbone.model.blocks.9.norm1.weight, module.backbone.model.blocks.9.attn.q.weight, module.backbone.model.blocks.9.attn.k.weight, module.backbone.model.blocks.9.attn.v.weight, module.backbone.model.blocks.9.attn.proj.weight, module.backbone.model.blocks.9.ls1.gamma, module.backbone.model.blocks.9.norm2.weight, module.backbone.model.blocks.9.mlp.fc1.weight, module.backbone.model.blocks.9.mlp.fc2.weight, module.backbone.model.blocks.9.ls2.gamma, module.backbone.model.blocks.10.norm1.weight, module.backbone.model.blocks.10.attn.q.weight, module.backbone.model.blocks.10.attn.k.weight, module.backbone.model.blocks.10.attn.v.weight, module.backbone.model.blocks.10.attn.proj.weight, module.backbone.model.blocks.10.ls1.gamma, module.backbone.model.blocks.10.norm2.weight, module.backbone.model.blocks.10.mlp.fc1.weight, module.backbone.model.blocks.10.mlp.fc2.weight, module.backbone.model.blocks.10.ls2.gamma, module.backbone.model.blocks.11.norm1.weight, module.backbone.model.blocks.11.attn.q.weight, module.backbone.model.blocks.11.attn.k.weight, module.backbone.model.blocks.11.attn.v.weight, module.backbone.model.blocks.11.attn.proj.weight, module.backbone.model.blocks.11.ls1.gamma, module.backbone.model.blocks.11.norm2.weight, module.backbone.model.blocks.11.mlp.fc1.weight, module.backbone.model.blocks.11.mlp.fc2.weight, module.backbone.model.blocks.11.ls2.gamma, module.aggregation.gem.p, module.aggregation.channel_attention.channel_attention.0.p, module.aggregation.channel_attention.channel_attention.2.weight, module.aggregation.channel_attention.channel_attention.4.weight, module.aggregation.feat_proj.0.weight
+2024-07-21 00:19:11   Loading checkpoint: logs/dinov2_vitb14_g2m/gsv_cities/2048/best_model.pth
+2024-07-21 00:19:12   Loaded checkpoint: start_epoch_num = 4, current_best_R@1 = 91.9
+2024-07-21 00:19:12   Resuming from epoch 4 with best recall@1 91.9
+2024-07-21 00:19:12   Start training epoch: 04
+2024-07-21 00:37:41   Finished epoch 04 in 0:18:21, average epoch loss = 0.1347
+2024-07-21 00:37:41   Extracting database features for evaluation/testing
+2024-07-21 00:39:04   Extracting queries features for evaluation/testing
+2024-07-21 00:39:10   Calculating recalls
+2024-07-21 00:39:11   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 92.03, R@5: 96.49, R@10: 97.03, R@100: 98.65
+2024-07-21 00:39:11   Improved: previous best R@1 = 91.9, current R@1 = 92.0
+2024-07-21 00:39:12   Start training epoch: 05
+2024-07-21 00:57:38   Finished epoch 05 in 0:18:17, average epoch loss = 0.1113
+2024-07-21 00:57:38   Extracting database features for evaluation/testing
+2024-07-21 00:59:01   Extracting queries features for evaluation/testing
+2024-07-21 00:59:06   Calculating recalls
+2024-07-21 00:59:08   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 92.57, R@5: 96.62, R@10: 97.16, R@100: 98.65
+2024-07-21 00:59:08   Improved: previous best R@1 = 92.0, current R@1 = 92.6
+2024-07-21 00:59:09   Start training epoch: 06
+2024-07-21 01:17:36   Finished epoch 06 in 0:18:18, average epoch loss = 0.0923
+2024-07-21 01:17:36   Extracting database features for evaluation/testing
+2024-07-21 01:18:58   Extracting queries features for evaluation/testing
+2024-07-21 01:19:04   Calculating recalls
+2024-07-21 01:19:05   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 91.89, R@5: 95.95, R@10: 97.03, R@100: 98.65
+2024-07-21 01:19:05   Not improved: 1 / 3: best R@1 = 92.6, current R@1 = 91.9
+2024-07-21 01:19:05   Start training epoch: 07
+2024-07-21 01:37:33   Finished epoch 07 in 0:18:18, average epoch loss = 0.0837
+2024-07-21 01:37:33   Extracting database features for evaluation/testing
+2024-07-21 01:38:56   Extracting queries features for evaluation/testing
+2024-07-21 01:39:01   Calculating recalls
+2024-07-21 01:39:02   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 91.89, R@5: 96.76, R@10: 97.70, R@100: 98.65
+2024-07-21 01:39:02   Not improved: 2 / 3: best R@1 = 92.6, current R@1 = 91.9
+2024-07-21 01:39:02   Start training epoch: 08
+2024-07-21 01:57:29   Finished epoch 08 in 0:18:18, average epoch loss = 0.0843
+2024-07-21 01:57:29   Extracting database features for evaluation/testing
+2024-07-21 01:58:52   Extracting queries features for evaluation/testing
+2024-07-21 01:58:57   Calculating recalls
+2024-07-21 01:58:59   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 91.62, R@5: 96.49, R@10: 97.57, R@100: 98.38
+2024-07-21 01:58:59   Not improved: 3 / 3: best R@1 = 92.6, current R@1 = 91.6
+2024-07-21 01:58:59   Start training epoch: 09
+2024-07-21 02:17:26   Finished epoch 09 in 0:18:18, average epoch loss = 0.1174
+2024-07-21 02:17:26   Extracting database features for evaluation/testing
+2024-07-21 02:18:50   Extracting queries features for evaluation/testing
+2024-07-21 02:18:55   Calculating recalls
+2024-07-21 02:18:56   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 92.30, R@5: 96.62, R@10: 97.30, R@100: 98.78
+2024-07-21 02:18:56   Not improved: 4 / 3: best R@1 = 92.6, current R@1 = 92.3
+2024-07-21 02:18:57   Best R@1: 92.6
+2024-07-21 02:18:57   Trained for 10 epochs, in total in 1:59:47
+2024-07-21 02:18:57   using MLP layer as FFN
+2024-07-21 02:18:58   Test set: < BaseDataset, pitts30k - #database: 10000; #queries: 6816 >
+2024-07-21 02:18:58   Extracting database features for evaluation/testing
+2024-07-21 02:20:09   Extracting queries features for evaluation/testing
+2024-07-21 02:20:59   Calculating recalls
+2024-07-21 02:21:05   Recalls on < BaseDataset, pitts30k - #database: 10000; #queries: 6816 >: R@1: 92.69, R@5: 96.76, R@10: 97.89, R@100: 99.55
+2024-07-21 02:21:05   Finished in 2:01:55
+2024-07-21 02:21:06   Test set: < BaseDataset, sf_xl - #database: 8015; #queries: 7993 >
+2024-07-21 02:21:06   Extracting database features for evaluation/testing
+2024-07-21 02:21:54   Extracting queries features for evaluation/testing
+2024-07-21 02:22:43   Calculating recalls
+2024-07-21 02:22:49   Recalls on < BaseDataset, sf_xl - #database: 8015; #queries: 7993 >: R@1: 94.58, R@5: 97.71, R@10: 98.32, R@100: 99.49
+2024-07-21 02:22:49   Finished in 2:03:39

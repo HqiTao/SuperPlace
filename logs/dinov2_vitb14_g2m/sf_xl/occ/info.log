@@ -1,0 +1,7 @@
+2024-07-15 15:25:53   Arguments: Namespace(aggregation='g2m', backbone='dinov2_vitb14', ca_method='gem', clusters=64, dataset_name='sf_xl', datasets_folder='/root/autodl-tmp', efficient_ram_testing=True, epochs_num=4, features_dim=768, infer_batch_size=512, linear_dim=256, lr=6e-05, num_hiddens=64, num_preds_to_save=0, num_workers=16, patience=40, pca_dataset_folder='pitts30k/images/train', pca_dim=None, queries_name=None, recall_values=[1, 5, 10, 100], resize=[224, 224], resize_test_imgs=False, resume='logs/dinov2_vitb14_g2m/gsv_cities/G64_GPMS_322/best_model.pth', save_dir='logs/dinov2_vitb14_g2m/sf_xl/2024-07-15_15-25-53', save_only_wrong_preds=False, seed=0, train_batch_size=32, trainable_layers='8, 9, 10, 11', use_amp16=False, use_ca=True, use_cls=False, use_extra_datasets=False, use_linear=False, use_lora=False, val_positive_dist_threshold=25)
+2024-07-15 15:25:53   The outputs are being saved in logs/dinov2_vitb14_g2m/sf_xl/2024-07-15_15-25-53
+2024-07-15 15:25:53   using MLP layer as FFN
+2024-07-15 15:25:55   Resuming model from logs/dinov2_vitb14_g2m/gsv_cities/G64_GPMS_322/best_model.pth
+2024-07-15 15:26:09   Test set: < BaseDataset, sf_xl - #database: 2805835; #queries: 76 >
+2024-07-15 15:27:58   Recalls on < BaseDataset, sf_xl - #database: 2805835; #queries: 76 >: R@1: 43.4, R@5: 53.9, R@10: 56.6, R@100: 69.7
+2024-07-15 15:27:58   Finished in 0:02:05

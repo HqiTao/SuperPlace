@@ -1,0 +1,53 @@
+2024-07-07 20:23:41   Arguments: Namespace(aggregation='salad', backbone='dinov2_vitb14', ca_method='gem', clusters=64, dataset_name='msls', datasets_folder='/root/autodl-tmp', epochs_num=8, features_dim=8448, infer_batch_size=64, linear_dim=256, lr=1.2e-05, num_hiddens=3, num_preds_to_save=0, num_workers=16, patience=10, pca_dataset_folder=None, pca_dim=None, queries_name=None, recall_values=[1, 5, 10, 100], resize=[322, 322], resize_test_imgs=True, resume='logs/dinov2_vitb14_salad/gsv_cities/k64_l128_GM/best_model.pth', save_dir='logs/dinov2_vitb14_salad/gsv_cities/2024-07-07_20-23-41', save_only_wrong_preds=False, seed=0, train_batch_size=64, trainable_layers='8, 9, 10, 11', use_amp16=True, use_ca=False, use_cls=False, use_extra_datasets=True, use_lora=False, val_positive_dist_threshold=25)
+2024-07-07 20:23:41   The outputs are being saved in logs/dinov2_vitb14_salad/gsv_cities/2024-07-07_20-23-41
+2024-07-07 20:23:41   Using 2 GPUs
+2024-07-07 20:23:41   Loading gsv_cities and msls from folder /root/autodl-tmp
+2024-07-07 20:23:41   Val set: < BaseDataset, msls - #database: 18871; #queries: 740 >
+2024-07-07 20:23:41   using MLP layer as FFN
+2024-07-07 20:23:43   trainable params: 29768641 || all params: 87991489 || trainable%: 33.83
+2024-07-07 20:23:43   Loading checkpoint: logs/dinov2_vitb14_salad/gsv_cities/k64_l128_GM/best_model.pth
+2024-07-07 20:23:44   Loaded checkpoint: start_epoch_num = 4, current_best_R@1 = 94.2
+2024-07-07 20:23:44   Resuming from epoch 4 with best recall@1 94.2
+2024-07-07 20:23:44   Start training epoch: 04
+2024-07-07 20:41:43   Finished epoch 04 in 0:17:51, average epoch loss = 0.1757
+2024-07-07 20:41:43   Extracting database features for evaluation/testing
+2024-07-07 20:43:10   Extracting queries features for evaluation/testing
+2024-07-07 20:43:16   Calculating recalls
+2024-07-07 20:43:22   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 93.92, R@5: 97.70, R@10: 97.97, R@100: 99.05
+2024-07-07 20:43:22   Not improved: 1 / 10: best R@1 = 94.2, current R@1 = 93.9
+2024-07-07 20:43:22   Start training epoch: 05
+2024-07-07 21:01:15   Finished epoch 05 in 0:17:44, average epoch loss = 0.1622
+2024-07-07 21:01:15   Extracting database features for evaluation/testing
+2024-07-07 21:02:41   Extracting queries features for evaluation/testing
+2024-07-07 21:02:47   Calculating recalls
+2024-07-07 21:02:53   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 94.19, R@5: 97.70, R@10: 97.97, R@100: 98.92
+2024-07-07 21:02:53   Not improved: 2 / 10: best R@1 = 94.2, current R@1 = 94.2
+2024-07-07 21:02:54   Start training epoch: 06
+2024-07-07 21:20:46   Finished epoch 06 in 0:17:44, average epoch loss = 0.1507
+2024-07-07 21:20:46   Extracting database features for evaluation/testing
+2024-07-07 21:22:13   Extracting queries features for evaluation/testing
+2024-07-07 21:22:19   Calculating recalls
+2024-07-07 21:22:25   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 94.32, R@5: 97.84, R@10: 98.11, R@100: 99.05
+2024-07-07 21:22:25   Improved: previous best R@1 = 94.2, current R@1 = 94.3
+2024-07-07 21:22:26   Start training epoch: 07
+2024-07-07 21:40:19   Finished epoch 07 in 0:17:45, average epoch loss = 0.1423
+2024-07-07 21:40:19   Extracting database features for evaluation/testing
+2024-07-07 21:41:46   Extracting queries features for evaluation/testing
+2024-07-07 21:41:52   Calculating recalls
+2024-07-07 21:41:58   Recalls on val set < BaseDataset, msls - #database: 18871; #queries: 740 >: R@1: 93.38, R@5: 97.57, R@10: 97.70, R@100: 98.65
+2024-07-07 21:41:58   Not improved: 1 / 10: best R@1 = 94.3, current R@1 = 93.4
+2024-07-07 21:41:59   Best R@1: 94.3
+2024-07-07 21:41:59   Trained for 08 epochs, in total in 1:18:17
+2024-07-07 21:41:59   using MLP layer as FFN
+2024-07-07 21:42:00   Test set: < BaseDataset, pitts30k - #database: 10000; #queries: 6816 >
+2024-07-07 21:42:00   Extracting database features for evaluation/testing
+2024-07-07 21:43:14   Extracting queries features for evaluation/testing
+2024-07-07 21:44:06   Calculating recalls
+2024-07-07 21:44:35   Recalls on < BaseDataset, pitts30k - #database: 10000; #queries: 6816 >: R@1: 93.02, R@5: 97.10, R@10: 97.76, R@100: 99.33
+2024-07-07 21:44:35   Finished in 1:20:53
+2024-07-07 21:44:35   Test set: < BaseDataset, sf_xl - #database: 8015; #queries: 7993 >
+2024-07-07 21:44:35   Extracting database features for evaluation/testing
+2024-07-07 21:45:25   Extracting queries features for evaluation/testing
+2024-07-07 21:46:16   Calculating recalls
+2024-07-07 21:46:44   Recalls on < BaseDataset, sf_xl - #database: 8015; #queries: 7993 >: R@1: 95.31, R@5: 98.05, R@10: 98.61, R@100: 99.62
+2024-07-07 21:46:44   Finished in 1:23:02
