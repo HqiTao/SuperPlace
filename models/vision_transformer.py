@@ -384,6 +384,7 @@ def vit_giant2(patch_size=16, num_register_tokens=0, **kwargs):
     Close to ViT-giant, with embed-dim 1536 and 24 heads => embed-dim per head 64
     """
     model = DinoVisionTransformer(
+        ffn_layer="swiglufused",
         patch_size=patch_size,
         embed_dim=1536,
         depth=40,

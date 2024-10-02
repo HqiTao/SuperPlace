@@ -81,7 +81,7 @@ model = torch.nn.DataParallel(model)
     
 util.print_trainable_parameters(model)
 util.print_trainable_layers(model)
-writer = SummaryWriter('runs/experiment')
+writer = SummaryWriter('../../tf-logs')
 
 #### Setup Optimizer and Loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
@@ -150,7 +150,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
         writer.add_scalar('training loss', batch_loss, epoch_num * len(train_dl) + batch_idx)
         epoch_losses = np.append(epoch_losses, batch_loss)
 
-        del loss, features, miner_outputs, images, labels
+        del loss, features, miner_outputs, images, labels, batch_loss
 
     logging.info(f"Finished epoch {epoch_num:02d} in {str(datetime.now() - epoch_start_time)[:-7]}, "
         f"average epoch loss = {epoch_losses.mean():.4f}")

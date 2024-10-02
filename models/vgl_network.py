@@ -65,7 +65,7 @@ def get_aggregation(args):
     elif args.aggregation == "g2m":
         return aggregations.G2M(
             num_channels=dinov2_network.CHANNELS_NUM[args.backbone],
-            fc_output_dim=dinov2_network.CHANNELS_NUM[args.backbone],
+            fc_output_dim=args.features_dim,
             num_hiddens=args.num_hiddens,
             use_cls=args.use_cls,
             use_ca=args.use_ca,
