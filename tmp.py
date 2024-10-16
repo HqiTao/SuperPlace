@@ -1,0 +1,18 @@
+import os
+from glob import glob
+from PIL import Image
+from tqdm import tqdm
+
+def check_images(dataset_folder):
+    images_paths = sorted(glob(f"{dataset_folder}/**/*.jpg", recursive=True))
+    
+    for image_path in tqdm(images_paths):
+        try:
+            with Image.open(image_path) as img:
+                img.verify()
+        except Exception as e:
+            print(f"无法读取图像文件: {image_path}, 错误: {e}")
+
+dataset_folder = '/mnt/sda3/2024_Projects/npr/datasets/gsv_cities/Images/'
+
+check_images(dataset_folder)

@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.signal import savgol_filter
 
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
-logging.getLogger('PIL').setLevel(logging.ERROR)
+# logging.getLogger('matplotlib').setLevel(logging.ERROR)
+# logging.getLogger('PIL').setLevel(logging.ERROR)
 
 def test(args, eval_ds, model):
 

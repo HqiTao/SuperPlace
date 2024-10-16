@@ -27,6 +27,7 @@ class DatasetFormatter:
             'lon': parts[6],
             'panoid': parts[7],
             'timestamp': parts[13], # unused
+            "day_night": parts[-2].split("_")[0]
         }
         return info
 
@@ -36,6 +37,8 @@ class DatasetFormatter:
         for sub_index in index:
             path = self.image_paths[sub_index]
             info = self.image_infos[sub_index]
+            if info['day_night'] == "night":
+                continue
             timestamp = info['timestamp']
             year, month = timestamp[:4], timestamp[4:6]
             writer.writerow({
@@ -61,7 +64,7 @@ class DatasetFormatter:
         for i, (class_id, _) in enumerate(class_id__group_id):
             images_per_class[class_id].append(i)
         
-        images_per_class = {k: v for k, v in images_per_class.items() if len(v) >= 4}
+        images_per_class = {k: v for k, v in images_per_class.items() if len(v) >= 2} # 4 in SuperPlace
         
         classes_per_group = defaultdict(set)
         for class_id, group_id in class_id__group_id:
@@ -69,12 +72,12 @@ class DatasetFormatter:
                 continue  # Skip classes with too few images
             classes_per_group[group_id].add(class_id)
         
-
         classes_per_group = [list(c) for c in classes_per_group.values()]
 
         for i, group_id in enumerate(classes_per_group):
-            if len(group_id) < 32:
-                continue
+            # SuperPlace used
+            # if len(group_id) < 32:
+            #     continue
             self.sub_name = "MSLS" + str(i) + city_name
             self.sub_output_folder = os.path.join(self.output_folder, "Images", self.sub_name)
             self.sub_output_csv = os.path.join(self.output_folder, "Dataframes", f"{self.sub_name}.csv")
@@ -94,7 +97,7 @@ class DatasetFormatter:
 
 
     @staticmethod
-    def get__class_id__group_id(utm_east, utm_north, M = 10, N = 5):
+    def get__class_id__group_id(utm_east, utm_north, M = 10, N = 6):
         """Return class_id and group_id for a given point.
             The class_id is a triplet (tuple) of UTM_east, UTM_north and
             heading (e.g. (396520, 4983800,120)).
@@ -115,9 +118,11 @@ city_names = ['amman', 'amsterdam', 'austin', 'bangkok', 'berlin', 'boston', 'bu
              'helsinki', 'london', 'manila', 'melbourne', 'moscow', 'nairobi', 'ottawa', 'paris', 
              'phoenix', 'saopaulo', 'tokyo', 'toronto', 'trondheim', 'zurich']
 
+# city_names = ['amman']
+
 
 for city_name in city_names:
     print(city_name + ": ")
-    csv_generator = DatasetFormatter('/mnt/sda3/Projects/npr/datasets/msls/train/', 
-                                    '/mnt/sda3/Projects/npr/datasets/gsv_cities', city_name)
+    csv_generator = DatasetFormatter('/mnt/sda3/2024_Projects/VPR-datasets-downloader-main/msls/train/', 
+                                    '/mnt/sda3/2024_Projects/npr/datasets/gsv_cities', city_name)
     csv_generator.to_gsv_format()

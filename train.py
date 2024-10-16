@@ -110,7 +110,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     logging.info(f"Start training epoch: {epoch_num:02d}")
 
     if args.use_extra_datasets:
-        random_datasets = gsv_cities.GPMS_DATASETS.copy()
+        random_datasets = gsv_cities.COMPARISON_FOR_CM.copy()
     else: 
         random_datasets = gsv_cities.TRAIN_CITIES.copy()
     random.shuffle(random_datasets)
