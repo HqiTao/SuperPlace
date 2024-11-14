@@ -153,7 +153,10 @@ class G2M(nn.Module):
         self.norm = L2Norm()
 
     def forward(self, x):
-        x_feat, x_cls = x
+        if self.use_cls:
+            x_feat, x_cls = x
+        else:
+            x_feat = x
 
         if self.use_ca:
             x_atte = self.channel_attention(x_feat)

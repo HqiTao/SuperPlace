@@ -61,7 +61,8 @@ class NetVLAD(nn.Module):
         self.conv.bias = None
 
     def forward(self, x):
-        x, cls_token = x
+        if self.work_with_tokens:
+            x, cls_token = x
         N, D, H, W = x.shape[:]
         if self.normalize_input:
             x = F.normalize(x, p=2, dim=1)  # Across descriptor dim
@@ -102,7 +103,7 @@ class NetVLAD(nn.Module):
             for iteration, (inputs, _) in enumerate(tqdm(random_dl, ncols=100)):
                 inputs = inputs.to("cuda")
                 outputs = backbone(inputs)
-                norm_outputs = F.normalize(outputs[0], p=2, dim=1)
+                norm_outputs = F.normalize(outputs, p=2, dim=1)
                 image_descriptors = norm_outputs.view(norm_outputs.shape[0], self.dim, -1).permute(0, 2, 1)
                 image_descriptors = image_descriptors.cpu().numpy()
                 batchix = iteration * args.infer_batch_size * descs_num_per_image

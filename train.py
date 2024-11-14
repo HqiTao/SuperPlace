@@ -30,32 +30,34 @@ logging.info(f"Using {torch.cuda.device_count()} GPUs")
 logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.datasets_folder}")
 
 
-
 resize_tmp = args.resize
-args.resize = [448, 448]
+args.resize = [224, 224]
 val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
 
 #### Initialize model
-model = vgl_network.VGLNet(args)
+# model = vgl_network.MambaVGL(args)
+# model = vgl_network.VGLNet(args)
+model = vgl_network.GeoLocalizationNet(args, args.backbone, args.features_dim)
 model = model.to("cuda")
 
 if args.aggregation == "netvlad":
     if not args.resume:
+        args.resize_test_imgs = False
         args.dataset_name = "pitts30k"
         cluster_ds = base_dataset.BaseDataset(args, "train")
         model.aggregation.initialize_netvlad_layer(args, cluster_ds, model.backbone)
         del cluster_ds
+        args.resize_test_imgs = True
         
     if args.use_linear:
         args.features_dim = args.clusters * args.linear_dim
         if args.use_cls:
             args.features_dim += 256
     else:
-        args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+        # args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+        args.features_dim = args.clusters * 512
 
-    
-        
 args.resize = resize_tmp
 
 if args.use_lora:
@@ -110,7 +112,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     logging.info(f"Start training epoch: {epoch_num:02d}")
 
     if args.use_extra_datasets:
-        random_datasets = gsv_cities.COMPARISON_FOR_CM.copy()
+        random_datasets = gsv_cities.GPMS_DATASETS.copy()
     else: 
         random_datasets = gsv_cities.TRAIN_CITIES.copy()
     random.shuffle(random_datasets)
@@ -188,10 +190,12 @@ logging.info(f"Trained for {epoch_num+1:02d} epochs, in total in {str(datetime.n
 
 # update test
 args.dataset_name = "pitts30k"
-args.resize_test_imgs = False
+# args.resize_test_imgs = False
 args.resume = f"{args.save_dir}/best_model.pth"
 
-model = vgl_network.VGLNet_Test(args)
+# model = vgl_network.MambaVGL(args)
+# model = vgl_network.MambaVGL(args)
+model = vgl_network.GeoLocalizationNet(args, args.backbone, args.features_dim)
 model = model.to("cuda")
 
 if args.use_lora:

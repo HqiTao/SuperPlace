@@ -38,7 +38,12 @@ def parse_arguments():
     parser.add_argument("--lr", type=float, default=0.00006, help="_")
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
-                        choices=["dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
+                        choices=["VGG16",
+                                 "ResNet18", "ResNet50", "ResNet101", "ResNet152",
+                                 "EfficientNet_B0", "EfficientNet_B1", "EfficientNet_B2",
+                                 "EfficientNet_B3", "EfficientNet_B4", "EfficientNet_B5", 
+                                 "EfficientNet_B6", "EfficientNet_B7", 
+                                 "dinov2_vitb14", "dinov2_vits14", "dinov2_vitl14", "dinov2_vitg14"], help="_")
     parser.add_argument("--aggregation", type=str, default="cosgem", choices=["salad", "netvlad", "cosgem", "cls", "g2m"])
     parser.add_argument("--trainable_layers", type=str, default="8, 9, 10, 11",
                     help="Comma-separated list of layer indexes to be trained")
@@ -57,9 +62,9 @@ def parse_arguments():
     parser.add_argument('--recall_values', type=int, default=[1, 5, 10, 100], nargs="+",
                         help="Recalls to be computed, such as R@1.")
     # Paths parameters
-    # parser.add_argument("--datasets_folder", type=str, default="/root/autodl-tmp", help="Path with all datasets")
+    parser.add_argument("--datasets_folder", type=str, default="/root/autodl-tmp", help="Path with all datasets")
     # parser.add_argument("--datasets_folder", type=str, default="/media/hello/data1/binux/datasets", help="Path with all datasets")
-    parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/2024_Projects/npr/datasets", help="Path with all datasets")
+    # parser.add_argument("--datasets_folder", type=str, default="/mnt/sda3/2024_Projects/npr/datasets", help="Path with all datasets")
     parser.add_argument("--dataset_name", type=str, default="pitts30k", help="Relative path of the dataset")
     parser.add_argument("--queries_name", type=str, default=None,
                         help="Path with images to be queried")
