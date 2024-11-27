@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 import torch
 
-from utils import parser, commons, util, test, test_vis, test_embodied, test_rerank
+from utils import parser, commons, util, test, test_vis
 from models import vgl_network, dinov2_network
 from datasets import base_dataset
 
@@ -19,6 +19,7 @@ logging.info(f"Arguments: {args}")
 logging.info(f"The outputs are being saved in {args.save_dir}")
 
 model = vgl_network.VGLNet_Test(args)
+# model = vgl_network.VGLNet(args)
 
 
 model = model.to("cuda")
@@ -53,7 +54,7 @@ test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
-recalls, recalls_str = test_rerank.test(args, test_ds, model, pca)
+recalls, recalls_str = test.test(args, test_ds, model, pca)
 ######################################### EMBODIED TEST on TEST SET #########################################
 # recalls, recalls_str = test_embodied.test(args, test_ds, model)
 

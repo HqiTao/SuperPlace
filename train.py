@@ -31,22 +31,25 @@ logging.debug(f"Loading gsv_cities and {args.dataset_name} from folder {args.dat
 
 
 resize_tmp = args.resize
-args.resize = [224, 224]
+args.resize = [322, 322]
 val_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Val set: {val_ds}")
 
 #### Initialize model
+model = vgl_network.VGLNet(args)
 # model = vgl_network.MambaVGL(args)
-# model = vgl_network.VGLNet(args)
-model = vgl_network.GeoLocalizationNet(args, args.backbone, args.features_dim)
+# model = vgl_network.VGLNet_CLIP(args)
+# model = vgl_network.GeoLocalizationNet(args, args.backbone, args.features_dim)
+# model.backbone.clip_model.visual = model.backbone.clip_model.visual.float()
 model = model.to("cuda")
 
 if args.aggregation == "netvlad":
     if not args.resume:
-        args.resize_test_imgs = False
+        # args.resize_test_imgs = False
         args.dataset_name = "pitts30k"
         cluster_ds = base_dataset.BaseDataset(args, "train")
         model.aggregation.initialize_netvlad_layer(args, cluster_ds, model.backbone)
+        # model.aggregation.initialize_netvlad_layer(args, cluster_ds, model.clip_model.visual)
         del cluster_ds
         args.resize_test_imgs = True
         
@@ -55,8 +58,8 @@ if args.aggregation == "netvlad":
         if args.use_cls:
             args.features_dim += 256
     else:
-        # args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
-        args.features_dim = args.clusters * 512
+        args.features_dim = args.clusters * dinov2_network.CHANNELS_NUM[args.backbone]
+        # args.features_dim = args.clusters * 768
 
 args.resize = resize_tmp
 
@@ -113,6 +116,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
 
     if args.use_extra_datasets:
         random_datasets = gsv_cities.GPMS_DATASETS.copy()
+        # random_datasets = ['Bangkok']
     else: 
         random_datasets = gsv_cities.TRAIN_CITIES.copy()
     random.shuffle(random_datasets)
@@ -189,13 +193,14 @@ logging.info(f"Best R@1: {best_r1:.1f}")
 logging.info(f"Trained for {epoch_num+1:02d} epochs, in total in {str(datetime.now() - start_time)[:-7]}")
 
 # update test
-args.dataset_name = "pitts30k"
-# args.resize_test_imgs = False
+
 args.resume = f"{args.save_dir}/best_model.pth"
 
+model = vgl_network.VGLNet_Test(args)
 # model = vgl_network.MambaVGL(args)
-# model = vgl_network.MambaVGL(args)
-model = vgl_network.GeoLocalizationNet(args, args.backbone, args.features_dim)
+# model = vgl_network.GeoLocalizationNet(args, args.backbone, args.features_dim)
+# model = vgl_network.VGLNet_CLIP(args)
+# model.backbone.clip_model.visual = model.backbone.clip_model.visual.float()
 model = model.to("cuda")
 
 if args.use_lora:
@@ -205,6 +210,9 @@ else:
 
 model = torch.nn.DataParallel(model)
 
+args.resize_test_imgs = False
+
+args.dataset_name = "pitts30k"
 test_ds = base_dataset.BaseDataset(args, "test")
 logging.info(f"Test set: {test_ds}")
 recalls, recalls_str = test.test(args, test_ds, model)
@@ -213,7 +221,6 @@ logging.info(f"Recalls on {test_ds}: {recalls_str}")
 logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
 
 args.dataset_name = "sf_xl"
-
 test_ds = base_dataset.BaseDataset(args, "val")
 logging.info(f"Test set: {test_ds}")
 recalls, recalls_str = test.test(args, test_ds, model)

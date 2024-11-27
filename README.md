@@ -3,6 +3,17 @@
 Super Alignment, Embodied Re-ranking and Two Improved Aggregation for Visual Place Recognition
 
 
+# Rebuttal
+
+
+```shell
+CUDA_VISIBLE_DEVICES=0,1 python train.py --train_batch_size 128 --aggregation netvlad --backbone CLIP --use_amp16 --dataset_name msls --epochs_num 10 --resize_test_imgs --infer_batch_size 64  --clusters 64 --lr 0.0006
+
+CUDA_VISIBLE_DEVICES=2,3 python train.py --train_batch_size 128 --aggregation g2m --backbone CLIP --use_amp16 --dataset_name msls --epochs_num 10 --resize_test_imgs --infer_batch_size 64 --use_extra_datasets --lr 0.00006 --use_ca --num_hiddens 64
+
+CUDA_VISIBLE_DEVICES=0,1 python train.py --train_batch_size 128 --aggregation g2m --backbone CLIP --use_amp16 --dataset_name msls --epochs_num 10 --resize_test_imgs --infer_batch_size 64 --use_extra_datasets --lr 0.00006
+```
+
 ## Eval
 
 ```shell
@@ -21,6 +32,8 @@ CUDA_VISIBLE_DEVICES=2 python train.py --train_batch_size 64 --aggregation g2m -
 
 CUDA_VISIBLE_DEVICES=3 python train.py --train_batch_size 64 --aggregation g2m --backbone dinov2_vitb14 --use_amp16 --dataset_name msls --epochs_num 5 --resize_test_imgs --infer_batch_size 64 --use_ca --num_hiddens 128
 ```
+
+
 
 ## GeM
 

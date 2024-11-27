@@ -101,6 +101,8 @@ def test(args, eval_ds, model , pca = None):
                                          batch_size=args.infer_batch_size, pin_memory=True)
         all_features = np.empty((len(eval_ds), args.features_dim), dtype="float32")
 
+        # database_descriptors_dir = os.path.join(eval_ds.dataset_folder, f"database_{args.aggregation}.npy")
+        # database_features = np.load(database_descriptors_dir)
         for inputs, indices in tqdm(database_dataloader, ncols=100):
             features = model(inputs.to("cuda"))
             features = features.cpu().numpy()
@@ -111,8 +113,8 @@ def test(args, eval_ds, model , pca = None):
         # print(model.all_time / eval_ds.database_num)
         
         logging.debug("Extracting queries features for evaluation/testing")
-        queries_infer_batch_size = args.infer_batch_size
-        # queries_infer_batch_size = 1
+        # queries_infer_batch_size = args.infer_batch_size
+        queries_infer_batch_size = 1
         queries_subset_ds = Subset(eval_ds, list(range(eval_ds.database_num, eval_ds.database_num+eval_ds.queries_num)))
         queries_dataloader = DataLoader(dataset=queries_subset_ds, num_workers=args.num_workers,
                                         batch_size=queries_infer_batch_size, pin_memory=True)
@@ -131,8 +133,11 @@ def test(args, eval_ds, model , pca = None):
     faiss_index.add(database_features)
     del database_features, all_features
     
+    start_time = time.time()
     logging.debug("Calculating recalls")
     distances, predictions = faiss_index.search(queries_features, max(args.recall_values))
+    end_time = time.time()
+    logging.info((end_time - start_time)/ eval_ds.queries_num)
     
     if args.dataset_name == "msls_challenge":
         fp = open("msls_challenge.txt", "w")

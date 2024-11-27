@@ -38,7 +38,7 @@ def parse_arguments():
     parser.add_argument("--lr", type=float, default=0.00006, help="_")
     # Model parameters
     parser.add_argument("--backbone", type=str, default="dinov2_vitb14",
-                        choices=["VGG16",
+                        choices=["VGG16", "CLIP",
                                  "ResNet18", "ResNet50", "ResNet101", "ResNet152",
                                  "EfficientNet_B0", "EfficientNet_B1", "EfficientNet_B2",
                                  "EfficientNet_B3", "EfficientNet_B4", "EfficientNet_B5", 
