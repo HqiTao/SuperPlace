@@ -76,8 +76,8 @@ class DatasetFormatter:
 
         for i, group_id in enumerate(classes_per_group):
             # SuperPlace used
-            # if len(group_id) < 32:
-            #     continue
+            if len(group_id) < 32:
+                continue
             self.sub_name = "MSLS" + str(i) + city_name
             self.sub_output_folder = os.path.join(self.output_folder, "Images", self.sub_name)
             self.sub_output_csv = os.path.join(self.output_folder, "Dataframes", f"{self.sub_name}.csv")
@@ -97,7 +97,7 @@ class DatasetFormatter:
 
 
     @staticmethod
-    def get__class_id__group_id(utm_east, utm_north, M = 10, N = 6):
+    def get__class_id__group_id(utm_east, utm_north, M = 5, N = 5):
         """Return class_id and group_id for a given point.
             The class_id is a triplet (tuple) of UTM_east, UTM_north and
             heading (e.g. (396520, 4983800,120)).
@@ -114,9 +114,9 @@ class DatasetFormatter:
         return class_id, group_id
 
 
-city_names = ['amman', 'amsterdam', 'austin', 'bangkok', 'berlin', 'boston', 'budapest', 'goa', 
-             'helsinki', 'london', 'manila', 'melbourne', 'moscow', 'nairobi', 'ottawa', 'paris', 
-             'phoenix', 'saopaulo', 'tokyo', 'toronto', 'trondheim', 'zurich']
+city_names = ['amman', 'amsterdam', 'austin', 'bangkok', 'berlin', 'boston', 'budapest', 'goa', ]
+            #  'helsinki', 'london', 'manila', 'melbourne', 'moscow', 'nairobi', 'ottawa', 'paris', 
+            #  'phoenix', 'saopaulo', 'tokyo', 'toronto', 'trondheim', 'zurich']
 
 # city_names = ['amman']
 

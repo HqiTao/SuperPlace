@@ -37,7 +37,6 @@ logging.info(f"Val set: {val_ds}")
 
 #### Initialize model
 model = vgl_network.VGLNet(args)
-# model = vgl_network.MambaVGL(args)
 # model = vgl_network.VGLNet_CLIP(args)
 # model = vgl_network.GeoLocalizationNet(args, args.backbone, args.features_dim)
 # model.backbone.clip_model.visual = model.backbone.clip_model.visual.float()
@@ -115,7 +114,7 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
     logging.info(f"Start training epoch: {epoch_num:02d}")
 
     if args.use_extra_datasets:
-        random_datasets = gsv_cities.GPMS_DATASETS.copy()
+        random_datasets = gsv_cities.COMPARISON_FOR_CM.copy()
         # random_datasets = ['Bangkok']
     else: 
         random_datasets = gsv_cities.TRAIN_CITIES.copy()
@@ -197,7 +196,6 @@ logging.info(f"Trained for {epoch_num+1:02d} epochs, in total in {str(datetime.n
 args.resume = f"{args.save_dir}/best_model.pth"
 
 model = vgl_network.VGLNet_Test(args)
-# model = vgl_network.MambaVGL(args)
 # model = vgl_network.GeoLocalizationNet(args, args.backbone, args.features_dim)
 # model = vgl_network.VGLNet_CLIP(args)
 # model.backbone.clip_model.visual = model.backbone.clip_model.visual.float()

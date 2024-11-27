@@ -2,7 +2,6 @@ from torch import nn
 
 from models import dinov2_network
 import models.aggregations as aggregations
-from models import mamba_vision
 
 import torchvision.transforms as transforms
 import time
@@ -94,26 +93,6 @@ CHANNELS_NUM_IN_LAST_CONV = {
     "EfficientNet_B7": 2560,
     "ViT":768,
 }
-
-class MambaVGL(nn.Module):
-    def __init__(self, args):
-        super().__init__()
-        self.backbone = mamba_vision.mamba_vision_T(
-            pretrained=True, 
-            model_path = "/root/autodl-tmp/MambaVision/weights/mambavision_tiny_1k.pth.tar")
-        
-        self.aggregation = get_aggregation(args, channels=640, fc_output_dim = 640)
-        
-    def forward(self, x):
-        x = self.backbone.patch_embed(x)
-        
-        for lev in self.backbone.levels:
-            x = lev(x)
-            
-        x = self.backbone.norm(x)
-        x = self.aggregation(x)
-        
-        return x
     
 class VGLNet(nn.Module):
 
