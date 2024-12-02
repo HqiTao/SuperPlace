@@ -55,8 +55,6 @@ logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
 recalls, recalls_str = test.test(args, test_ds, model, pca)
-######################################### EMBODIED TEST on TEST SET #########################################
-# recalls, recalls_str = test_embodied.test(args, test_ds, model)
 
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
 logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")

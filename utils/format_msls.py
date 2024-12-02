@@ -64,7 +64,7 @@ class DatasetFormatter:
         for i, (class_id, _) in enumerate(class_id__group_id):
             images_per_class[class_id].append(i)
         
-        images_per_class = {k: v for k, v in images_per_class.items() if len(v) >= 2} # 4 in SuperPlace
+        images_per_class = {k: v for k, v in images_per_class.items() if len(v) >= 4} # 4 in SuperPlace
         
         classes_per_group = defaultdict(set)
         for class_id, group_id in class_id__group_id:
@@ -114,11 +114,9 @@ class DatasetFormatter:
         return class_id, group_id
 
 
-city_names = ['amman', 'amsterdam', 'austin', 'bangkok', 'berlin', 'boston', 'budapest', 'goa', ]
-            #  'helsinki', 'london', 'manila', 'melbourne', 'moscow', 'nairobi', 'ottawa', 'paris', 
-            #  'phoenix', 'saopaulo', 'tokyo', 'toronto', 'trondheim', 'zurich']
-
-# city_names = ['amman']
+city_names = ['amman', 'amsterdam', 'austin', 'bangkok', 'berlin', 'boston', 'budapest', 'goa',
+              'helsinki', 'london', 'manila', 'melbourne', 'moscow', 'nairobi', 'ottawa', 'paris', 
+              'phoenix', 'saopaulo', 'tokyo', 'toronto', 'trondheim', 'zurich']
 
 
 for city_name in city_names:

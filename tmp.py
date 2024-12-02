@@ -11,7 +11,7 @@ def check_images(dataset_folder):
             with Image.open(image_path) as img:
                 img.verify()
         except Exception as e:
-            print(f"无法读取图像文件: {image_path}, 错误: {e}")
+            print(f"Image path: {image_path}, error: {e}")
 
 dataset_folder = '/mnt/sda3/2024_Projects/npr/datasets/gsv_cities/Images/'
 

@@ -1,7 +1,0 @@
-2024-07-14 20:03:58   Arguments: Namespace(aggregation='netvlad', backbone='dinov2_vitb14', ca_method='gem', clusters=64, dataset_name='svox', datasets_folder='/root/autodl-tmp', efficient_ram_testing=True, epochs_num=4, features_dim=768, infer_batch_size=256, linear_dim=128, lr=6e-05, num_hiddens=3, num_preds_to_save=0, num_workers=16, patience=40, pca_dataset_folder='pitts30k/images/train', pca_dim=None, queries_name=None, recall_values=[1, 5, 10, 100], resize=[224, 224], resize_test_imgs=False, resume='logs/dinov2_vitb14_netvlad/gsv_cities/NVL_k64_l128_322/best_model.pth', save_dir='logs/dinov2_vitb14_netvlad/svox/2024-07-14_20-03-58', save_only_wrong_preds=False, seed=0, train_batch_size=32, trainable_layers='8, 9, 10, 11', use_amp16=False, use_ca=False, use_cls=False, use_extra_datasets=False, use_linear=True, use_lora=False, val_positive_dist_threshold=25)
-2024-07-14 20:03:58   The outputs are being saved in logs/dinov2_vitb14_netvlad/svox/2024-07-14_20-03-58
-2024-07-14 20:03:58   using MLP layer as FFN
-2024-07-14 20:04:00   Resuming model from logs/dinov2_vitb14_netvlad/gsv_cities/NVL_k64_l128_322/best_model.pth
-2024-07-14 20:04:00   Test set: < BaseDataset, svox - #database: 17166; #queries: 870 >
-2024-07-14 20:04:09   Recalls on < BaseDataset, svox - #database: 17166; #queries: 870 >: R@1: 98.9, R@5: 99.8, R@10: 99.8, R@100: 99.9
-2024-07-14 20:04:09   Finished in 0:00:11
