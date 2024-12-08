@@ -5,7 +5,7 @@ import torch
 
 from utils import parser, commons, util, test, test_vis
 from models import vgl_network, dinov2_network
-from datasets import base_dataset
+from datasets import base_dataset, sustech_dataset, baidu_dataset
 
 from peft import PeftModel
 
@@ -50,12 +50,13 @@ else:
     pca = util.compute_pca(args, model, args.pca_dataset_folder, full_features_dim)
 
 
-test_ds = base_dataset.BaseDataset(args, "test")
+test_ds = sustech_dataset.TestDataset(args.datasets_folder, resize_test_imgs=True, image_size=512)
 logging.info(f"Test set: {test_ds}")
 
 ######################################### TEST on TEST SET #########################################
-recalls, recalls_str = test.test(args, test_ds, model, pca)
+recalls, recalls_str, precisions, precisions_str = test.test(args, test_ds, model, pca)
 
 logging.info(f"Recalls on {test_ds}: {recalls_str}")
+logging.info(f"Precisions on {test_ds}: {precisions_str}")
 logging.info(f"Finished in {str(datetime.now() - start_time)[:-7]}")
 

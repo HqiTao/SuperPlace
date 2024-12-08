@@ -11,70 +11,7 @@ import logging
 import torchvision
 from typing import Tuple
 
-import clip  # assuming you have the CLIP library installed
-
 from transformers import ViTModel
-
-
-class CLIP(nn.Module):
-
-    def __init__(self):
-        super().__init__()
-        # Load pre-trained CLIP model
-        self.clip_model, _ = clip.load("ViT-B/32", device="cuda" if torch.cuda.is_available() else "cpu")
-        
-        # Freeze all layers by default
-        for param in self.clip_model.parameters():
-            param.requires_grad = False
-        
-        # Unfreeze the last 4 layers of the vision encoder
-        total_layers = len(self.clip_model.visual.transformer.resblocks)
-        for i in range(total_layers - 4, total_layers):  # Unfreeze layers 8 to 11
-            for param in self.clip_model.visual.transformer.resblocks[i].parameters():
-                param.requires_grad = True
-
-            
-    def forward(self, x):
-        # Get features from the CLIP vision encoder (image input)
-        
-        B, _, _,_ = x.shape
-
-        x = self.clip_model.visual.conv1(x)  # shape = [batch_size, width, num_patches, num_patches]
-        x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [batch_size, width, num_patches^2]
-        x = x.permute(0, 2, 1)  # shape = [batch_size, num_patches^2, width]
-        x = torch.cat([self.clip_model.visual.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device), x], dim=1)  # shape = [batch_size, num_patches^2 + 1, width]
-        x = x + self.clip_model.visual.positional_embedding.to(x.dtype)
-        x = self.clip_model.visual.ln_pre(x)
-
-        # Pass through the transformer layers
-        x = x.permute(1, 0, 2)  # NLD -> LND
-        x = self.clip_model.visual.transformer(x)  # shape = [num_patches^2 + 1, batch_size, width]
-        x = x.permute(1, 0, 2)  # LND -> NLD
-
-        # Here x contains the feature map for each patch, including the class token.
-        image_features = x[:, 1:, :]
-        # print(image_features.shape)
-        image_features = image_features.reshape((B, 7, 7, 768)).permute(0, 3, 1, 2)
-        
-        return image_features
-        # return image_features, x[:, 0, :] # for SALAD
-
-class VGLNet_CLIP(nn.Module):
-
-    def __init__(self, args):
-        super().__init__()
-
-
-        self.backbone = CLIP()
-        # Aggregation network or task-specific layers (if necessary)
-        self.aggregation = get_aggregation(args, channels= 768, fc_output_dim = 768)
-        
-    def forward(self, x):
-        
-        image_features = self.backbone(x)
-        x = self.aggregation(image_features)
-
-        return x
 
 # The number of channels in the last convolutional layer, the one before average pooling
 CHANNELS_NUM_IN_LAST_CONV = {
@@ -100,7 +37,7 @@ class VGLNet(nn.Module):
         super().__init__()
         self.backbone = dinov2_network.DINOv2(backbone=args.backbone,
                                trainable_layers=args.trainable_layers,
-                               return_token = False)
+                               return_token=args.use_cls)
         
         self.aggregation = get_aggregation(args, channels=dinov2_network.CHANNELS_NUM[args.backbone], fc_output_dim = dinov2_network.CHANNELS_NUM[args.backbone])
         
@@ -116,7 +53,7 @@ class VGLNet_Test(nn.Module):
         super().__init__()
         self.backbone = dinov2_network.DINOv2(backbone=args.backbone,
                                trainable_layers=args.trainable_layers,
-                                return_token = False)
+                                return_token=args.use_cls)
         
         self.aggregation = get_aggregation(args, channels=dinov2_network.CHANNELS_NUM[args.backbone], fc_output_dim = dinov2_network.CHANNELS_NUM[args.backbone])
         

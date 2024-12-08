@@ -163,6 +163,21 @@ def test(args, eval_ds, model , pca = None):
     recalls = recalls / eval_ds.queries_num * 100
     recalls_str = ", ".join([f"R@{val}: {rec:.2f}" for val, rec in zip(args.recall_values, recalls)])
 
+
+    #### Calculate Precisions ####
+    precisions = np.zeros(len(args.precision_values))
+    for query_idx, preds in enumerate(predictions):
+        positives = positives_per_query[query_idx]
+        for i, n in enumerate(args.precision_values):
+            top_n_preds = preds[:n]
+            # Check if all top n predictions are in the positives
+            if np.all(np.in1d(top_n_preds, positives)):
+                precisions[i] += 1  # If condition met, increment all higher n precisions
+    
+    # Convert precisions to percentages
+    precisions = (precisions / eval_ds.queries_num) * 100
+    precisions_str = ", ".join([f"P@{val}: {prec:.2f}" for val, prec in zip(args.precision_values, precisions)])
+
     # Save visualizations of predictions
     if args.num_preds_to_save != 0:
         logging.info("Saving final predictions")
@@ -171,4 +186,4 @@ def test(args, eval_ds, model , pca = None):
                                 args.save_dir, args.save_only_wrong_preds)
 
 
-    return recalls, recalls_str
+    return recalls, recalls_str, precisions, precisions_str

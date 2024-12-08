@@ -59,8 +59,10 @@ def parse_arguments():
     parser.add_argument("--num_workers", type=int, default=16, help="num_workers for all dataloaders")
     parser.add_argument('--resize', type=int, default=[224, 224], nargs=2, help="Resizing shape for images (HxW).")
     parser.add_argument("--val_positive_dist_threshold", type=int, default=25, help="_")
-    parser.add_argument('--recall_values', type=int, default=[1, 5, 10, 100], nargs="+",
+    parser.add_argument('--recall_values', type=int, default=[1, 5, 10], nargs="+",
                         help="Recalls to be computed, such as R@1.")
+    parser.add_argument('--precision_values', type=int, default=[1, 5, 10], nargs="+",
+                        help="Precisions to be computed, such as P@1.")
     # Paths parameters
     # parser.add_argument("--datasets_folder", type=str, default="/root/autodl-tmp", help="Path with all datasets")
     # parser.add_argument("--datasets_folder", type=str, default="/media/hello/data1/binux/datasets", help="Path with all datasets")
